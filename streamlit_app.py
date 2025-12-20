@@ -337,7 +337,7 @@ st.markdown(f"""
 # ==========================================
 
 # A. 导航栏 (简单且对齐)
-col_char_btns, col_lang , col_more= st.columns([5, 1])
+col_char_btns, col_lang , col_more= st.columns([5, 1, 1])
 with col_char_btns:
     c_cols = st.columns(len(CHARACTERS))
     idx = 0
