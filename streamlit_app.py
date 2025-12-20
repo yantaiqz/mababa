@@ -385,7 +385,7 @@ with col_more:
     # 可将 href 替换为实际需要的链接（如GitHub、关于页等）
     st.markdown("""
         <a href="https://github.com" target="_blank" class="neal-btn-link">
-            <button class="neal-btn">{get_txt('more_label')}</button>
+            <button class="neal-btn"> {get_txt('more_label')}  </button>
         </a>
     """, unsafe_allow_html=True)
 
