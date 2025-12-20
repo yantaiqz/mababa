@@ -21,7 +21,7 @@ st.set_page_config(
 LANG_TEXT = {
     "zh": {
         "title": "花光{name}的钱",
-        "subtitle": "你现在拥有 **{money}**。这钱不花完，别想下班！",
+        "subtitle": "你现在拥有 {money}。这钱不花完，别想下班！",
         "receipt_title": "购物清单",
         "total_spent": "实付金额",
         "balance_zero": "恭喜你！你已经身无分文，可以安心退休了！",
@@ -32,6 +32,7 @@ LANG_TEXT = {
         "pay_wechat": "微信支付",
         "pay_alipay": "支付宝",
         "pay_paypal": "PayPal",
+        "more_label": "✨ 更多乐子",
         "unit_cn": "杯",
         "unit_total": "总计投入",
         "pay_success": "收到！感谢打赏！代码写得更有劲了！❤️",
@@ -46,7 +47,7 @@ LANG_TEXT = {
     },
     "en": {
         "title": "Spend {name}'s Money",
-        "subtitle": "You have **{money}**. Spend it all before you can leave!",
+        "subtitle": "You have {money}. Spend it all before you can leave!",
         "receipt_title": "Receipt",
         "total_spent": "Total Paid",
         "balance_zero": "Congratulations! You are broke and free!",
@@ -55,6 +56,7 @@ LANG_TEXT = {
         "coffee_title": "Support Me",
         "coffee_desc": "If you enjoyed this, consider buying me a coffee!",
         "pay_wechat": "WeChat Pay",
+        "more_label": "✨ More fun",
         "pay_alipay": "Alipay",
         "pay_paypal": "PayPal",
         "unit_cn": "Cups",
@@ -311,13 +313,13 @@ st.markdown(f"""
     
     /* 皮肤微调 */
     .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
-    .bill-wechat-total {{ font-size: 2.8rem; font-weight: 800; text-align: center; margin: 15px 0; color: #111; font-family: 'JetBrains Mono'; }}
+    .bill-wechat-total {{ font-size: 1.8rem; font-weight: 800; text-align: center; margin: 15px 0; color: #111; font-family: 'JetBrains Mono'; }}
     
     .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
-    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.5rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
+    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.8rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
     
     .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
-    .bill-paypal-total {{ font-size: 3rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
+    .bill-paypal-total {{ font-size: 1.8rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
     
     /* 统计条 */
     .stats-bar {{
@@ -335,7 +337,7 @@ st.markdown(f"""
 # ==========================================
 
 # A. 导航栏 (Icon Style Buttons)
-col_char_btns, col_lang = st.columns([5, 1], gap="small")
+col_char_btns, col_lang , col_more = st.columns([5, 1, 1], gap="small")
 with col_char_btns:
     c_cols = st.columns(len(CHARACTERS))
     for idx, (key, data) in enumerate(CHARACTERS.items()):
@@ -349,6 +351,14 @@ with col_lang:
     if st.button("🌐 " + ("EN" if st.session_state.lang == 'zh' else "中"), use_container_width=True):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
+
+with col_more:
+    # 核心修复：f-string + 正确调用多语言函数
+    st.markdown(f"""
+        <a href="https://laodeng.streamlit.app/" target="_blank" class="neal-btn-link">
+            <button class="neal-btn">{get_txt('more_label')}</button>
+        </a>
+    """, unsafe_allow_html=True)
 
 # B. 标题与余额
 balance, total_spent = calculate_balance()
@@ -542,6 +552,5 @@ st.markdown(f"""
 <div class="stats-bar">
     <div style="text-align: center;"><div>{get_txt('visitor_today')}</div><div style="font-weight:700; color:#111;">{today_uv}</div></div>
     <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('visitor_total')}</div><div style="font-weight:700; color:#111;">{total_uv}</div></div>
-    <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('pv_today')}</div><div style="font-weight:700; color:#111;">{today_pv}</div></div>
 </div><br><br>
 """, unsafe_allow_html=True)
