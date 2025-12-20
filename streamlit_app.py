@@ -146,7 +146,7 @@ CHARACTERS = {
 }
 
 # ==========================================
-# 3. 状态与工具函数 (修复 cart 初始化逻辑)
+# 3. 状态与工具
 # ==========================================
 if 'lang' not in st.session_state:
     st.session_state.lang = 'zh'
@@ -158,29 +158,17 @@ if 'visitor_id' not in st.session_state:
     st.session_state["visitor_id"] = str(uuid.uuid4())
 if 'coffee_num' not in st.session_state:
     st.session_state.coffee_num = 1
-if 'has_counted' not in st.session_state:
-    st.session_state.has_counted = False
 
-def get_txt(key):
-    return LANG_TEXT[st.session_state.lang][key]
+def get_txt(key): return LANG_TEXT[st.session_state.lang][key]
+def get_char(): return CHARACTERS[st.session_state.char_key]
 
-def get_char():
-    return CHARACTERS[st.session_state.char_key]
-
-# 修复人物切换时的购物车初始化
 def switch_char(key):
     st.session_state.char_key = key
-    # 仅当购物车中无该人物数据时才初始化
     if key not in st.session_state.cart:
         st.session_state.cart[key] = {}
         for item in CHARACTERS[key]['items']:
             st.session_state.cart[key][item['id']] = 0
-    # 强制刷新页面
-    st.rerun()
-
-# 初始化当前人物购物车
-if st.session_state.char_key not in st.session_state.cart:
-    switch_char(st.session_state.char_key)
+switch_char(st.session_state.char_key)
 
 def calculate_balance():
     c_key = st.session_state.char_key
@@ -193,202 +181,102 @@ def calculate_balance():
             spent += count * item_map[item_id]
     return char_data['money'] - spent, spent
 
-def update_count(item_id, delta):
-    """分离 balance 依赖，避免传参错误"""
+def update_count(item_id, delta, item_price, current_balance):
     c_key = st.session_state.char_key
     current_count = st.session_state.cart[c_key].get(item_id, 0)
-    item_price = next(item['price'] for item in CHARACTERS[c_key]['items'] if item['id'] == item_id)
-    balance, _ = calculate_balance()
-
-    if delta > 0 and balance < item_price:
+    if delta > 0 and current_balance < item_price:
         st.toast(get_txt("toast_no_money"), icon="⚠️")
         return
-    if delta < 0 and current_count <= 0:
-        return
+    if delta < 0 and current_count <= 0: return
     st.session_state.cart[c_key][item_id] = current_count + delta
-    # 手动刷新页面，确保状态同步
-    st.rerun()
 
-# 点击 Emoji 直接购买
-def click_item_add(item_id):
-    update_count(item_id, 1)
+def click_item_add(item_id, item_price, current_balance):
+    update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 4. 核心 CSS 修复 (彻底重置按钮样式)
+# 4. CSS (修复按钮显示问题)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
 
 st.markdown(f"""
 <style>
-    /* 基础重置 - 移除所有默认边距 */
-    #MainMenu, footer, header {{visibility: hidden !important;}}
-    .stApp {{ 
-        background-color: #f1f2f6 !important; 
-        padding: 0 !important;
-        margin: 0 !important;
-    }}
-    /* 全局容器 - 固定宽度 + 居中 */
-    .content-container {{
-        max-width: 1200px;
-        margin: 0 auto !important;
-        padding: 15px !important;
-    }}
-
-    /* 顶部余额栏 */
+    /* 基础重置 */
+    #MainMenu, footer, header {{visibility: hidden;}}
+    .stApp {{ background-color: #f1f2f6; }}
+    
+    /* 顶部导航 */
     .header-container {{
-        position: sticky; 
-        top: 0; 
-        z-index: 999;
+        position: sticky; top: 0; z-index: 999;
         background: linear-gradient(180deg, {theme_colors[0]}, {theme_colors[1]});
-        color: white; 
-        padding: 15px 0 !important; 
+        color: white; padding: 10px 0; text-align: center;
+        font-weight: 800; font-size: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;
+    }}
+    
+    /* 卡片内部样式优化 */
+    .item-info-container {{
         text-align: center;
-        font-weight: 800; 
-        font-size: 2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-        margin-bottom: 20px !important;
-        border-radius: 8px;
+        margin-top: -10px;
+    }}
+    .item-name {{ font-size: 0.9rem; font-weight: bold; color: #333; height: 40px; display: flex; align-items: center; justify-content: center; line-height: 1.2; }}
+    .item-price {{ color: {theme_colors[1]}; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; }}
+    
+    /* 强制调整 Emoji 按钮的样式，使其看起来像大图标 */
+    /* 注意：这是 Streamlit 按钮的通用选择器，可能会影响其他按钮，所以我们在下面通过结构隔离 */
+    div[data-testid="column"] button {{
+        width: 100%;
     }}
 
-    /* 商品卡片 - 关键修复：固定尺寸 + 无溢出 */
-    .item-card {{
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        padding: 20px 15px !important;
-        width: 100% !important;
-        height: 280px !important; /* 固定高度，确保内容不溢出 */
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        border: 1px solid #f0f0f0;
-        margin-bottom: 20px !important;
-        box-sizing: border-box !important;
+    /* 全局容器限制 */
+    .content-container {{ max-width: 900px; margin-left: auto; margin-right: auto; }}
+    
+    /* --- 账单样式 --- */
+    .bill-container {{ background: white; margin: 0 auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }}
+    .bill-footer {{ background: #f9f9f9; padding: 15px; text-align: center; border-top: 1px dashed #ddd; }}
+    /* 微信 */
+    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 15px; text-align: center; font-weight: bold; }}
+    .bill-wechat-total {{ font-size: 2.2rem; font-weight: bold; text-align: center; margin: 20px 0 5px 0; color: #000; }}
+    .bill-wechat-label {{ text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; }}
+    /* 支付宝 */
+    .bill-alipay-header {{ background: #1677ff; color: white; padding: 15px; display: flex; justify-content: space-between; }}
+    .bill-alipay-row {{ display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.95rem; }}
+    .bill-alipay-total {{ padding: 15px; text-align: right; font-weight: bold; font-size: 1.2rem; border-top: 1px solid #eee; }}
+    /* PayPal */
+    .bill-paypal {{ border: 1px solid #e0e0e0; border-radius: 4px; }}
+    .bill-paypal-header {{ background: #003087; color: white; padding: 20px; }}
+    .bill-paypal-total {{ font-size: 2.5rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; }}
+    
+    /* 咖啡打赏 */
+    .coffee-card {{
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border: 1px solid #e5e7eb; border-radius: 12px;
+        padding: 8px; text-align: center;
     }}
-    .item-card:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        border-color: {theme_colors[0]};
-    }}
-
-    /* Emoji 按钮 - 完全自定义，脱离 Streamlit 样式 */
-    .emoji-button {{
-        background: transparent !important;
-        border: none !important;
-        font-size: 4rem !important;
-        line-height: 1 !important;
-        padding: 0 !important;
-        margin: 10px 0 !important;
-        cursor: pointer !important;
-        width: 100% !important;
-        text-align: center !important;
-    }}
-    .emoji-button:hover {{
-        transform: scale(1.1);
-        color: {theme_colors[0]} !important;
-    }}
-    .emoji-button:active {{
-        transform: scale(0.95);
-    }}
-
-    /* 商品信息文本 */
-    .item-name {{
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        color: #333 !important;
-        text-align: center !important;
-        margin: 10px 0 !important;
-        min-height: 40px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }}
-    .item-price {{
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
-        color: {theme_colors[1]} !important;
-        text-align: center !important;
-        margin-bottom: 15px !important;
-    }}
-
-    /* 操作按钮组 - 固定宽度 + 均匀分布 */
-    .action-buttons {{
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        width: 100% !important;
-        gap: 8px !important;
-        margin-top: 10px !important;
-    }}
-    .action-btn {{
-        flex: 1 !important;
-        padding: 8px 0 !important;
-        font-size: 1.2rem !important;
-        border-radius: 6px !important;
-        border: 1px solid #ddd !important;
-        background: white !important;
-        cursor: pointer !important;
-        text-align: center !important;
-    }}
-    .action-btn-primary {{
-        background-color: {theme_colors[0]} !important;
-        color: white !important;
-        border: none !important;
-    }}
-    .count-display {{
-        font-size: 1.2rem !important;
-        font-weight: 600 !important;
-        color: #444 !important;
-        text-align: center !important;
-        width: 60px !important;
-        margin: 0 5px !important;
-    }}
-
-    /* 其他样式优化 */
-    .bill-container {{
-        background: white;
-        margin: 20px auto !important;
-        max-width: 400px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border-radius: 8px !important;
-        overflow: hidden !important;
-    }}
-    .stats-container {{
-        display: flex !important;
-        justify-content: center !important;
-        gap: 20px !important;
-        margin: 20px auto !important;
-        padding: 12px !important;
-        background-color: #f8f9fa !important;
-        border-radius: 8px !important;
-        border: 1px solid #e9ecef !important;
-        color: #666 !important;
-        font-size: 0.9rem !important;
-        max-width: 500px !important;
-    }}
+    .price-number {{ color: #d9534f; font-weight: 900; font-size: 1.5rem; }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. 主页面逻辑 (简化 columns 嵌套)
+# 5. 主页面逻辑
 # ==========================================
+
+# 全局居中容器
 st.markdown('<div class="content-container">', unsafe_allow_html=True)
 
-# A. 导航栏 - 简化布局
-col_chars, col_lang = st.columns([8, 1], gap="small")
+# A. 导航栏
+col_logo, col_chars, col_lang = st.columns([1, 6, 1])
 with col_chars:
-    char_btns = st.columns(len(CHARACTERS))
-    for idx, (key, data) in enumerate(CHARACTERS.items()):
-        with char_btns[idx]:
-            btn_label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-            if st.button(btn_label, key=f"char_{key}", use_container_width=True):
+    c_cols = st.columns(len(CHARACTERS) + 2)
+    idx = 1
+    for key, data in CHARACTERS.items():
+        with c_cols[idx]:
+            if st.button(f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}", key=f"btn_char_{key}", use_container_width=True):
                 switch_char(key)
+                st.rerun()
+        idx += 1
 with col_lang:
-    lang_btn_label = "🇺🇸 EN" if st.session_state.lang == 'zh' else "🇨🇳 中文"
-    if st.button(lang_btn_label, key="lang_switch", use_container_width=True):
+    if st.button("EN" if st.session_state.lang == 'zh' else "中", use_container_width=True):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
@@ -398,87 +286,59 @@ c_key = st.session_state.char_key
 currency = current_char['currency']
 char_name = current_char['name_zh'] if st.session_state.lang == 'zh' else current_char['name_en']
 
-st.markdown(f"<h1 style='text-align:center; margin:10px 0; font-size:2rem;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align: center; margin-top:-5px; font-size:1.8rem;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
 money_str = f"{currency}{current_char['money']:,}"
-st.markdown(f"<div style='text-align:center; color:#666; font-size:1rem; margin-bottom:15px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
-st.markdown(f"<div class='header-container'>{currency} {balance:,.0f}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 10px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
+st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# C. 商品网格 - 关键修复：扁平化 columns 结构
+# C. 商品网格 (3列布局) - 修复渲染逻辑
 items = current_char['items']
 cols_per_row = 3
-total_rows = (len(items) + cols_per_row - 1) // cols_per_row
-
-for row_idx in range(total_rows):
-    start_idx = row_idx * cols_per_row
-    end_idx = min(start_idx + cols_per_row, len(items))
-    row_items = items[start_idx:end_idx]
+for i in range(0, len(items), cols_per_row):
+    # 外层列：左右留空布局
+    outer_cols = st.columns([0.2, 1, 1, 1, 0.2]) 
     
-    # 只使用一层 columns，避免嵌套挤压
-    cols = st.columns([1]*cols_per_row, gap="large")
-    
-    for col_idx, item in enumerate(row_items):
-        with cols[col_idx]:
+    for j in range(cols_per_row):
+        if i + j < len(items):
+            item = items[i + j]
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
-            item_price = f"{currency} {item['price']:,}"
-            current_count = st.session_state.cart[c_key][item['id']]
             
-            # 商品卡片容器
-            st.markdown('<div class="item-card">', unsafe_allow_html=True)
-            
-            # 1. Emoji 购买按钮 - 绑定独立 key
-            emoji_key = f"emoji_{c_key}_{item['id']}"
-            if st.button(item['icon'], key=emoji_key, use_container_width=True):
-                click_item_add(item['id'])
-            # 强制注入样式类
-            st.markdown(f"""
-            <style>
-                button[data-testid="baseButton-{emoji_key}"] {{
-                    class: "emoji-button";
-                }}
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # 2. 商品名称和价格
-            st.markdown(f"<div class='item-name'>{item_name}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='item-price'>{item_price}</div>", unsafe_allow_html=True)
-            
-            # 3. 操作按钮组 (- / 数量 / +)
-            st.markdown('<div class="action-buttons">', unsafe_allow_html=True)
-            
-            # 减号按钮
-            dec_key = f"dec_{c_key}_{item['id']}"
-            if st.button("－", key=dec_key, use_container_width=True):
-                update_count(item['id'], -1)
-            st.markdown(f"""
-            <style>
-                button[data-testid="baseButton-{dec_key}"] {{
-                    class: "action-btn";
-                }}
-            </style>
-            """, unsafe_allow_html=True)
-            
-            # 数量显示
-            st.markdown(f"<div class='count-display'>{current_count}</div>", unsafe_allow_html=True)
-            
-            # 加号按钮
-            inc_key = f"inc_{c_key}_{item['id']}"
-            if st.button("＋", key=inc_key, use_container_width=True, type="primary"):
-                update_count(item['id'], 1)
-            st.markdown(f"""
-            <style>
-                button[data-testid="baseButton-{inc_key}"] {{
-                    class: "action-btn action-btn-primary";
-                }}
-            </style>
-            """, unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)  # 关闭 action-buttons
-            st.markdown('</div>', unsafe_allow_html=True)  # 关闭 item-card
+            with outer_cols[j+1]: 
+                # 使用原生 container 自带边框，替代 CSS 注入
+                with st.container(border=True):
+                    # 1. 核心修复：直接使用 Emoji 字符串作为 button 的 label
+                    # 不再使用 HTML 注入 label，避免代码显示问题
+                    # 通过 columns 居中按钮（虽然 use_container_width 已填满）
+                    
+                    # 定义一个专门的大按钮用于 Emoji 点击
+                    if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True):
+                        click_item_add(item['id'], item['price'], balance)
+                    
+                    # 2. 信息展示
+                    st.markdown(f"""
+                    <div class="item-info-container">
+                        <div class="item-name">{item_name}</div>
+                        <div class="item-price">{currency} {item['price']:,}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # 3. 底部操作按钮
+                    b1, b2, b3 = st.columns([1, 1.2, 1])
+                    with b1: 
+                        st.button("－", key=f"dec_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], -1, item['price'], balance), use_container_width=True)
+                    with b2:
+                        cnt = st.session_state.cart[c_key].get(item['id'], 0)
+                        st.markdown(f"<div style='text-align: center; line-height: 2.2rem; font-weight: bold; color:#444;'>{cnt}</div>", unsafe_allow_html=True)
+                    with b3: 
+                        st.button("＋", key=f"inc_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], 1, item['price'], balance), type="primary", use_container_width=True)
+                
+                st.write("") # 垂直间距
 
-# D. 账单生成 (保持原有逻辑)
+# D. 账单生成
 if total_spent > 0:
     st.markdown("---")
     bill_type = current_char['bill_type']
+    
     purchased_items = []
     item_count_total = 0
     for item in items:
@@ -490,6 +350,7 @@ if total_spent > 0:
 
     qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://spend-billions.streamlit.app"
     
+    # 微信风格
     if bill_type == 'wechat':
         bill_html = f"""
         <div class="bill-container bill-wechat">
@@ -504,6 +365,8 @@ if total_spent > 0:
         bill_html += f"""</div></div>
             <div class="bill-footer"><div style="color: #999; font-size: 0.8rem; margin-bottom: 5px;">{get_txt('scan_to_play')}</div><img src="{qr_url}" style="width: 80px; height: 80px; mix-blend-mode: multiply;"></div>
         </div>"""
+
+    # 支付宝风格
     elif bill_type == 'alipay':
         bill_html = f"""
         <div class="bill-container bill-alipay">
@@ -516,10 +379,12 @@ if total_spent > 0:
             <div class="bill-alipay-total">{get_txt('total_spent')}: <span style="font-size: 1.5rem; color: #1677ff;">{currency}{total_spent:,.0f}</span></div>
             <div class="bill-footer"><div style="display: flex; align-items: center; justify-content: center; gap: 10px;"><img src="{qr_url}" style="width: 60px; height: 60px;"><div style="text-align: left; font-size: 0.8rem; color: #999;"><div>{get_txt('scan_to_play')}</div><div style="color: #1677ff;">PK Billionaires</div></div></div></div>
         </div>"""
-    else:
+
+    # PayPal 风格
+    else: 
         bill_html = f"""
         <div class="bill-container bill-paypal">
-            <div class="bill-paypal-header"><div style="font-weight: bold; font-size: 1.1rem;">PayPal</div><div style="font-size: 0.8rem; opacity: 0.8;">{datetime.datetime.now().strftime('%Y-%m-%d')}</div></div>
+            <div class="bill-paypal-header"><div class="bill-paypal-logo">PayPal</div><div style="font-size: 0.8rem; opacity: 0.8;">{datetime.datetime.now().strftime('%Y-%m-%d')}</div></div>
             <div class="bill-paypal-total">{currency}{total_spent:,.0f}</div>
             <div style="padding: 0 20px;"><div style="font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Details</div>
         """
@@ -528,83 +393,59 @@ if total_spent > 0:
         bill_html += f"""</div>
             <div class="bill-footer" style="margin-top: 20px;"><img src="{qr_url}" style="width: 60px; height: 60px;"><div style="font-size: 0.7rem; color: #aaa; margin-top: 5px;">Scan to challenge Elon</div></div>
         </div>"""
-    
-    st.markdown("<div style='display:flex;justify-content:center;'>", unsafe_allow_html=True)
-    st.markdown(bill_html, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    share_text = get_txt('share_copy_text').format(amount=f"{currency}{total_spent:,.0f}", item_count=item_count_total)
-    st.markdown(f"""
-    <div style="margin: 20px auto; padding: 15px; background: #eef2f5; border-radius: 8px; text-align: center; max-width: 600px;">
-        <div style="font-weight: bold; color: #333; margin-bottom: 8px;">{get_txt('share_prompt')}</div>
-        <code style="display: block; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; color: #555; word-break: break-all;">{share_text}</code>
-    </div>
-    """, unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c2:
+        st.markdown(bill_html, unsafe_allow_html=True)
+        share_text = get_txt('share_copy_text').format(amount=f"{currency}{total_spent:,.0f}", item_count=item_count_total)
+        st.markdown(f"""<div style="margin-top: 20px; padding: 15px; background: #eef2f5; border-radius: 8px; text-align: center;"><div style="font-weight: bold; color: #333; margin-bottom: 8px;">{get_txt('share_prompt')}</div><code style="display: block; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 4px; color: #555;">{share_text}</code></div>""", unsafe_allow_html=True)
 
     if balance == 0:
         st.balloons()
-        st.success(get_txt('balance_zero'), icon="🎉")
+        st.success(get_txt('balance_zero'))
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True) # End content container
 
 # ==========================================
-# 6. 咖啡打赏弹窗 (保持原有逻辑)
+# 6. 底部咖啡 & 统计
 # ==========================================
 @st.dialog("☕ " + get_txt('coffee_title'), width="small")
 def show_coffee_window():
-    st.markdown(f"""
-    <div style="text-align:center; padding:10px;">
-        <h3 style="margin:10px 0;">{get_txt('coffee_title')}</h3>
-        <p style="color:#666; margin:0 0 20px 0;">{get_txt('coffee_desc')}</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
+    st.markdown(f"""<div class="coffee-card"><p>{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
     presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
     def set_val(n): st.session_state.coffee_num = n
-    preset_cols = st.columns(3, gap="small")
+    cols = st.columns(3, gap="small")
     for i, (icon, num) in enumerate(presets):
-        with preset_cols[i]:
-            if st.button(f"{icon} {num}", key=f"preset_{i}", use_container_width=True):
-                set_val(num)
+        with cols[i]:
+            if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): set_val(num)
     
     st.write("")
-    coffee_cols = st.columns([1,1], gap="small")
-    with coffee_cols[0]:
-        cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="visible")
+    c1, c2 = st.columns([1, 1], gap="small")
+    with c1: cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="collapsed")
     total = cnt * 10
-    with coffee_cols[1]:
-        st.markdown(f"""
-        <div style="background:#fff0f0; border:1px dashed #ffcccc; border-radius:8px; padding:15px; text-align:center; height:100%; display:flex; flex-direction:column; justify-content:center;">
-            <div style="color:#888; font-size:0.8rem; margin-bottom:5px;">{get_txt('unit_total')} (¥)</div>
-            <div style="color:#d9534f; font-weight:900; font-size:1.5rem;">{total}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    with c2: st.markdown(f"""<div style="background:#fff0f0; border:1px dashed #ffcccc; border-radius:8px; padding:5px; text-align:center;"><div class="price-number">{total}</div></div>""", unsafe_allow_html=True)
     
-    pay_tabs = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay')])
+    t1, t2 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay')])
     def show_qr(img_path):
-        if os.path.exists(img_path):
-            st.image(img_path, use_container_width=True)
-        else:
-            st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}_CNY", width=140)
-    with pay_tabs[0]: show_qr("wechat_pay.jpg")
-    with pay_tabs[1]: show_qr("ali_pay.jpg")
-    
+        if os.path.exists(img_path): st.image(img_path, use_container_width=True)
+        else: st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}", width=140)
+    with t1: show_qr("wechat_pay.jpg")
+    with t2: show_qr("ali_pay.jpg")
+    st.write("")
     if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
         st.balloons()
         st.success(get_txt('pay_success').format(count=cnt))
         time.sleep(2)
         st.rerun()
 
-# 咖啡按钮
-coffee_col = st.columns([3,2,3])
-with coffee_col[1]:
-    if st.button(get_txt('coffee_btn'), use_container_width=True, type="secondary"):
+c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
+with c_btn_col2:
+    if st.button(get_txt('coffee_btn'), use_container_width=True):
         show_coffee_window()
 
-# ==========================================
-# 7. 统计功能 (修复数据库路径)
-# ==========================================
-DB_FILE = os.path.join(os.getcwd(), "visit_stats.db")  # 改为当前目录，避免权限问题
+# 数据库统计
+DB_DIR = os.path.expanduser("~/")
+DB_FILE = os.path.join(DB_DIR, "visit_stats.db")
 def track_stats():
     try:
         conn = sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -613,38 +454,24 @@ def track_stats():
         c.execute('''CREATE TABLE IF NOT EXISTS visitors (visitor_id TEXT PRIMARY KEY, last_visit_date TEXT)''')
         today = datetime.datetime.utcnow().date().isoformat()
         vid = st.session_state["visitor_id"]
-        
-        if not st.session_state.has_counted:
+        if "has_counted" not in st.session_state:
             c.execute("INSERT OR IGNORE INTO daily_traffic (date, pv_count) VALUES (?, 0)", (today,))
             c.execute("UPDATE daily_traffic SET pv_count = pv_count + 1 WHERE date=?", (today,))
             c.execute("INSERT OR REPLACE INTO visitors (visitor_id, last_visit_date) VALUES (?, ?)", (vid, today))
             conn.commit()
-            st.session_state.has_counted = True
-        
+            st.session_state["has_counted"] = True
         t_uv = c.execute("SELECT COUNT(*) FROM visitors WHERE last_visit_date=?", (today,)).fetchone()[0]
         a_uv = c.execute("SELECT COUNT(*) FROM visitors").fetchone()[0]
         t_pv = c.execute("SELECT pv_count FROM daily_traffic WHERE date=?", (today,)).fetchone()[0]
         conn.close()
         return t_uv, a_uv, t_pv
-    except Exception as e:
-        return 0, 0, 0
+    except: return 0, 0, 0
 
 today_uv, total_uv, today_pv = track_stats()
 st.markdown(f"""
-<div class="stats-container">
-    <div style="text-align:center;">
-        <div style="font-weight:bold; font-size:1rem;">{today_uv}</div>
-        <div style="font-size:0.8rem;">{get_txt('visitor_today')}</div>
-    </div>
-    <div style="border-left:1px solid #ddd; padding-left:20px; text-align:center;">
-        <div style="font-weight:bold; font-size:1rem;">{total_uv}</div>
-        <div style="font-size:0.8rem;">{get_txt('visitor_total')}</div>
-    </div>
-    <div style="border-left:1px solid #ddd; padding-left:20px; text-align:center;">
-        <div style="font-weight:bold; font-size:1rem;">{today_pv}</div>
-        <div style="font-size:0.8rem;">{get_txt('pv_today')}</div>
-    </div>
-</div>
+<div style="display: flex; justify-content: center; gap: 15px; margin-top: 15px; padding: 8px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; color: #666; font-size: 0.8rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+    <div style="text-align: center;"><div>{get_txt('visitor_today')}: {today_uv}</div></div>
+    <div style="border-left:1px solid #ddd; padding-left:15px; text-align: center;"><div>{get_txt('visitor_total')}: {total_uv}</div></div>
+    <div style="border-left:1px solid #ddd; padding-left:15px; text-align: center;"><div>{get_txt('pv_today')}: {today_pv}</div></div>
+</div><br>
 """, unsafe_allow_html=True)
-
-st.markdown("<br><br>", unsafe_allow_html=True)
