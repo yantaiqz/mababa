@@ -221,7 +221,7 @@ for i in range(0, len(ITEMS), cols_per_row):
 # 5. 底部：购物小票 (修复版)
 # ==========================================
 # 实时获取最新消费金额（必须放在账单渲染前）
-balance, total_spent = get_real_time_balance_and_spent()
+
 
 if total_spent > 0:
     st.markdown("---")
