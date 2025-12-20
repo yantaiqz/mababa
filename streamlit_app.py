@@ -215,61 +215,61 @@ for i in range(0, len(ITEMS), cols_per_row):
                             use_container_width=True
                         )
                     st.markdown("<br>", unsafe_allow_html=True)
-
 # ==========================================
-# 5. 底部：购物小票 (修复渲染版)
+# 5. 底部：购物小票
 # ==========================================
 if total_spent > 0:
     st.markdown("---")
     
-    # 1. 开始构建 HTML 字符串
-    # 注意：这里增加了一个 wrapper div，强制背景为白色，文字为黑色，防止深色模式下看不清
-    receipt_html = """
-    <div style='
-        background-color: white; 
-        color: black; 
-        padding: 20px; 
-        border-radius: 10px; 
-        max-width: 500px; 
-        margin: 0 auto; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        font-family: "Courier New", Courier, monospace;
-    '>
-        <h2 style='text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px;'>
+    # 1. 拼接 HTML 字符串
+    # 这里的关键是：所有样式都写在内联 style 里，确保 flex 布局生效
+    html_content = f"""
+    <div style="
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 500px;
+        margin: 0 auto;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        color: #333;
+        font-family: 'Courier New', Courier, monospace;
+    ">
+        <h2 style="text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px; font-weight: 800;">
             🧾 支付宝账单
         </h2>
     """
     
-    # 2. 循环添加商品
+    # 2. 循环添加已购商品
     for item in ITEMS:
         count = st.session_state[item['id']]
         if count > 0:
-            receipt_html += f"""
-            <div style='display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;'>
-                <span style='text-align: left; font-weight: 500;'>{item['name']} x{count}</span>
-                <span style='font-weight: bold;'>¥ {item['price'] * count:,.0f}</span>
+            html_content += f"""
+            <div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                <span style="text-align: left; font-weight: bold;">{item['name']} x{count}</span>
+                <span style="font-weight: bold; color: #e74c3c;">¥ {item['price'] * count:,.0f}</span>
             </div>
             """
-            
-    # 3. 添加总计和结尾
-    receipt_html += f"""
-        <div style='
+
+    # 3. 添加总计
+    html_content += f"""
+        <div style="
             display: flex; 
             justify-content: space-between; 
-            font-size: 1.2rem; 
-            font-weight: 800; 
+            font-size: 1.3rem; 
+            font-weight: 900; 
             margin-top: 20px; 
-            border-top: 2px solid #333; 
-            padding-top: 10px;
-        '>
+            border-top: 3px solid #333; 
+            padding-top: 15px;
+        ">
             <span>总计消费:</span>
             <span>¥ {total_spent:,.0f}</span>
         </div>
     </div>
     """
     
-    # 4. 【关键步骤】渲染 HTML
-    st.markdown(receipt_html, unsafe_allow_html=True)
+    # 4. 【核心修复点】渲染 HTML
+    # 必须加上 unsafe_allow_html=True，否则就会显示成你看到的那种乱码
+    st.markdown(html_content, unsafe_allow_html=True)
     
     # 彻底花光彩蛋
     if balance == 0:
