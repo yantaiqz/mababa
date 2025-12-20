@@ -210,7 +210,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 4. CSS 样式 (紧凑布局 + 动态颜色)
+# 4. CSS 样式 (3列布局 + 两边留空 + 紧凑)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -227,9 +227,9 @@ st.markdown(f"""
     .header-container {{
         position: sticky; top: 0; z-index: 999;
         background: linear-gradient(180deg, {theme_colors[0]}, {theme_colors[1]});
-        color: white; padding: 12px 0; text-align: center; /* 紧凑化 */
-        font-weight: 800; font-size: 2rem; /* 缩小字体 */
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; /* 减少间距 */
+        color: white; padding: 12px 0; text-align: center;
+        font-weight: 800; font-size: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;
     }}
     
     /* --- 人物切换按钮 --- */
@@ -242,29 +242,29 @@ st.markdown(f"""
     
     /* --- 商品卡片 (紧凑 + 可点击) --- */
     .item-card {{
-        background: white; padding: 12px; border-radius: 8px; /* 减少内边距 */
+        background: white; padding: 12px; border-radius: 8px;
         text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         transition: transform 0.2s; height: 100%; display: flex; 
         flex-direction: column; justify-content: space-between;
-        cursor: pointer; /* 鼠标指针变化 */
-        margin-bottom: 8px; /* 减少卡片间距 */
+        cursor: pointer;
+        margin-bottom: 8px;
     }}
     .item-card:hover {{ 
-        transform: translateY(-3px); /* 缩小悬浮效果 */
+        transform: translateY(-3px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-        border: 1px solid {theme_colors[0]}; /* 悬浮加边框 */
+        border: 1px solid {theme_colors[0]};
     }}
-    .item-emoji {{ font-size: 2.5rem; margin-bottom: 5px; /* 缩小图标 */ }}
-    .item-name {{ font-size: 1rem; font-weight: bold; color: #333; height: 30px; /* 紧凑化 */
+    .item-emoji {{ font-size: 2.5rem; margin-bottom: 5px; }}
+    .item-name {{ font-size: 1rem; font-weight: bold; color: #333; height: 30px;
                  display: flex; align-items: center; justify-content: center; }}
-    .item-price {{ color: {theme_colors[1]}; font-weight: bold; font-size: 0.9rem; margin: 5px 0; /* 缩小字体 */ }}
+    .item-price {{ color: {theme_colors[1]}; font-weight: bold; font-size: 0.9rem; margin: 5px 0; }}
     
     /* --- 按钮样式 (紧凑) --- */
     div.stButton > button {{
         background-color: #f8f9fa; border: 1px solid #ddd;
         color: #333; font-weight: bold; width: 100%;
-        padding: 4px 0; /* 减少按钮内边距 */
-        font-size: 0.9rem; /* 缩小按钮字体 */
+        padding: 4px 0;
+        font-size: 0.9rem;
     }}
     div.stButton > button:hover {{ border-color: {theme_colors[0]}; color: {theme_colors[0]}; }}
     /* 购买按钮高亮 */
@@ -272,30 +272,39 @@ st.markdown(f"""
 
     /* --- 咖啡 & 统计 (紧凑) --- */
     .metric-container {{
-        display: flex; justify-content: center; gap: 15px; /* 减少间距 */
+        display: flex; justify-content: center; gap: 15px;
         margin-top: 15px; padding: 8px; background-color: #f8f9fa;
         border-radius: 8px; border: 1px solid #e9ecef; color: #666;
-        font-size: 0.8rem; /* 缩小字体 */
+        font-size: 0.8rem;
+        max-width: 80%; margin-left: auto; margin-right: auto;
     }}
     .coffee-card {{
         background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
         border: 1px solid #e5e7eb; border-radius: 12px;
-        padding: 8px; text-align: center; /* 紧凑化 */
+        padding: 8px; text-align: center;
     }}
-    .price-number {{ color: #d9534f; font-weight: 900; font-size: 1.5rem; /* 缩小字体 */ }}
+    .price-number {{ color: #d9534f; font-weight: 900; font-size: 1.5rem; }}
     
-    /* --- 购物小票 (紧凑) --- */
+    /* --- 购物小票 (紧凑 + 居中) --- */
     .receipt {{
-        padding: 15px; border-radius: 8px; max-width: 450px; /* 缩小宽度 */
+        padding: 15px; border-radius: 8px; max-width: 70%;
         margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         color: #333; font-family: 'Courier New', Courier, monospace;
+    }}
+    
+    /* --- 全局容器限制 (两边留空) --- */
+    .content-container {{
+        max-width: 85%; margin-left: auto; margin-right: auto;
     }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. 核心逻辑：渲染与交互
+# 5. 核心逻辑：渲染与交互 (3列布局 + 两边留空)
 # ==========================================
+
+# --- 全局容器（两边留空）---
+st.markdown('<div class="content-container">', unsafe_allow_html=True)
 
 # --- A. 顶部导航 (语言 & 人物 | 紧凑化) ---
 col_logo, col_chars, col_lang = st.columns([1, 5, 1])
@@ -343,19 +352,22 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- C. 商品网格 (4列布局更紧凑 + 点击商品加1) ---
+# --- C. 商品网格 (3列布局 + 两边留空) ---
 items = current_char['items']
-cols_per_row = 4 # 改为4列更紧凑（14个商品：4+4+4+2）
+cols_per_row = 3 # 固定3列布局
+# 计算总页数/行数（14个商品：3*4=12，最后一行2个）
+total_rows = (len(items) + cols_per_row - 1) // cols_per_row
 
-# 使用 Streamlit 原生 columns 循环（紧凑布局）
+# 3列布局 + 列间距small + 两边留空
 for i in range(0, len(items), cols_per_row):
-    cols = st.columns(cols_per_row, gap="small") # 缩小列间距
+    # 外层列：左右留空（1份空白 + 3份商品 + 1份空白）
+    outer_cols = st.columns([1, 1, 1, 1, 1]) # 总5列，中间3列放商品
     for j in range(cols_per_row):
         if i + j < len(items):
             item = items[i + j]
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
             
-            with cols[j]:
+            with outer_cols[j+1]: # 中间3列（索引1/2/3）
                 # 商品卡片（点击触发加1）
                 card_key = f"card_{c_key}_{item['id']}"
                 if st.button(
@@ -369,7 +381,9 @@ for i in range(0, len(items), cols_per_row):
                     key=card_key,
                     use_container_width=True,
                     on_click=click_item_add,
-                    args=(item['id'], item['price'], balance)
+                    args=(item['id'], item['price'], balance),
+                    # 移除按钮默认样式
+                    help=""
                 ):
                     pass # 点击事件由on_click处理
                 
@@ -388,7 +402,7 @@ for i in range(0, len(items), cols_per_row):
                               type="primary", use_container_width=True)
                 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- D. 购物小票 (紧凑化) ---
+# --- D. 购物小票 (紧凑化 + 居中) ---
 if total_spent > 0:
     st.markdown("---")
     
@@ -426,8 +440,11 @@ if total_spent > 0:
 
 st.markdown("<br>", unsafe_allow_html=True) # 减少底部留白
 
+# --- 关闭全局容器 ---
+st.markdown('</div>', unsafe_allow_html=True)
+
 # ==========================================
-# 6. 底部功能：咖啡打赏 & 统计 (紧凑化)
+# 6. 底部功能：咖啡打赏 & 统计 (居中 + 两边留空)
 # ==========================================
 
 # --- 咖啡弹窗逻辑 ---
@@ -478,13 +495,14 @@ def show_coffee_window():
         time.sleep(2)
         st.rerun()
 
-# --- 底部按钮 (紧凑化) ---
+# --- 底部按钮 (居中 + 两边留空) ---
+st.markdown('<div class="content-container">', unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
 with c_btn_col2:
     if st.button(get_txt('coffee_btn'), use_container_width=True):
         show_coffee_window()
 
-# --- 数据库统计 (精简版) ---
+# --- 数据库统计 (精简版 + 居中) ---
 DB_DIR = os.path.expanduser("~/")
 DB_FILE = os.path.join(DB_DIR, "visit_stats.db")
 
@@ -518,7 +536,7 @@ def track_stats():
 
 today_uv, total_uv, today_pv = track_stats()
 
-# 显示统计（紧凑化）
+# 显示统计（居中 + 两边留空）
 st.markdown(f"""
 <div class="metric-container">
     <div class="metric-box"><div class="metric-sub">{get_txt('visitor_today')}: {today_uv}</div></div>
@@ -526,3 +544,5 @@ st.markdown(f"""
     <div class="metric-box" style="border-left:1px solid #ddd; padding-left:15px;"><div class="metric-sub">{get_txt('pv_today')}: {today_pv}</div></div>
 </div><br>
 """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
