@@ -416,7 +416,7 @@ if total_spent > 0:
             purchased_items.append((name, cnt, item['price'] * cnt))
             item_count_total += cnt
 
-    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://spend-billions.streamlit.app"
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://mababa.streamlit.app"
     
     # 构造账单HTML
     bill_html = ""
@@ -550,6 +550,6 @@ st.markdown(f"""
 <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; padding: 15px; background-color: white; border-radius: 12px; border: 1px solid #e9ecef; color: #666; font-size: 0.85rem; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
     <div style="text-align: center;"><div>{get_txt('visitor_today')}: <b>{today_uv}</b></div></div>
     <div style="border-left:1px solid #eee; padding-left:20px; text-align: center;"><div>{get_txt('visitor_total')}: <b>{total_uv}</b></div></div>
-    <div style="border-left:1px solid #eee; padding-left:20px; text-align: center;"><div>{get_txt('pv_today')}: <b>{today_pv}</b></div></div>
+    #<div style="border-left:1px solid #eee; padding-left:20px; text-align: center;"><div>{get_txt('pv_today')}: <b>{today_pv}</b></div></div>
 </div><br><br>
 """, unsafe_allow_html=True)
