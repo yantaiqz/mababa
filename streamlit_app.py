@@ -383,7 +383,9 @@ with col_lang:
 with col_more:
     # 修复：添加按钮文字 + 有效链接 + 统一样式
     # 可将 href 替换为实际需要的链接（如GitHub、关于页等）
-    st.markdown("""
+
+
+    st.markdown(f"""
         <a href="https://github.com" target="_blank" class="neal-btn-link">
             <button class="neal-btn">{get_txt('more_label')}</button>
         </a>
