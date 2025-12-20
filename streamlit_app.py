@@ -216,43 +216,59 @@ for i in range(0, len(ITEMS), cols_per_row):
                         )
                     st.markdown("<br>", unsafe_allow_html=True)
 
-
 # ==========================================
-# 5. 底部：购物小票 (修复版)
+# 5. 底部：购物小票 (修复渲染版)
 # ==========================================
-# 实时获取最新消费金额（必须放在账单渲染前）
-
-
 if total_spent > 0:
     st.markdown("---")
-    # 初始化账单HTML（确保根标签完整闭合）
+    
+    # 1. 开始构建 HTML 字符串
+    # 注意：这里增加了一个 wrapper div，强制背景为白色，文字为黑色，防止深色模式下看不清
     receipt_html = """
-    <div class='receipt'>
-        <h2>🧾 支付宝账单</h2>
-        <hr>
+    <div style='
+        background-color: white; 
+        color: black; 
+        padding: 20px; 
+        border-radius: 10px; 
+        max-width: 500px; 
+        margin: 0 auto; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        font-family: "Courier New", Courier, monospace;
+    '>
+        <h2 style='text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px;'>
+            🧾 支付宝账单
+        </h2>
     """
-    # 遍历商品生成账单行（避免拼接错误，用f-string+换行）
+    
+    # 2. 循环添加商品
     for item in ITEMS:
         count = st.session_state[item['id']]
         if count > 0:
-            item_total = item['price'] * count
-            # 用f-string格式化每行，避免手动拼接出错
             receipt_html += f"""
-            <div style='display: flex; justify-content: space-between; margin: 10px 0;'>
-                <span style='text-align: left;'>{item['name']} x{count}</span>
-                <span style='font-weight: bold;'>¥ {item_total:,.0f}</span>
+            <div style='display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;'>
+                <span style='text-align: left; font-weight: 500;'>{item['name']} x{count}</span>
+                <span style='font-weight: bold;'>¥ {item['price'] * count:,.0f}</span>
             </div>
             """
-    # 补充总计行和闭合标签
+            
+    # 3. 添加总计和结尾
     receipt_html += f"""
-        <hr>
-        <div style='display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-top: 20px;'>
+        <div style='
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            margin-top: 20px; 
+            border-top: 2px solid #333; 
+            padding-top: 10px;
+        '>
             <span>总计消费:</span>
             <span>¥ {total_spent:,.0f}</span>
         </div>
     </div>
     """
-    # 关键：必须开启unsafe_allow_html=True，否则HTML会被转义成源码
+    
+    # 4. 【关键步骤】渲染 HTML
     st.markdown(receipt_html, unsafe_allow_html=True)
     
     # 彻底花光彩蛋
