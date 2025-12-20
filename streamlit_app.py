@@ -224,19 +224,19 @@ if total_spent > 0:
     # 1. 拼接 HTML 字符串
     # 这里的关键是：所有样式都写在内联 style 里，确保 flex 布局生效
     html_content = f"""
-    <div style="
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        max-width: 500px;
-        margin: 0 auto;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        color: #333;
-        font-family: 'Courier New', Courier, monospace;
-    ">
-        <h2 style="text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px; font-weight: 800;">
-            🧾 支付宝账单
-        </h2>
+<div style="
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    margin: 0 auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    color: #333;
+    font-family: 'Courier New', Courier, monospace;
+">
+    <h2 style="text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px; font-weight: 800;">
+        🧾 支付宝账单
+    </h2>
     """
     
     # 2. 循环添加已购商品
@@ -244,27 +244,27 @@ if total_spent > 0:
         count = st.session_state[item['id']]
         if count > 0:
             html_content += f"""
-    <div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-        <span style="text-align: left; font-weight: bold;">{item['name']} x{count}</span>
-        <span style="font-weight: bold; color: #e74c3c;">¥ {item['price'] * count:,.0f}</span>
-    </div>
+<div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+    <span style="text-align: left; font-weight: bold;">{item['name']} x{count}</span>
+    <span style="font-weight: bold; color: #e74c3c;">¥ {item['price'] * count:,.0f}</span>
+</div>
             """
 
     # 3. 添加总计
     html_content += f"""
-        <div style="
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 1.3rem; 
-            font-weight: 900; 
-            margin-top: 20px; 
-            border-top: 3px solid #333; 
-            padding-top: 15px;
-        ">
-            <span>总计消费:</span>
-            <span>¥ {total_spent:,.0f}</span>
-        </div>
-    </div>
+<div style="
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 1.3rem; 
+    font-weight: 900; 
+    margin-top: 20px; 
+    border-top: 3px solid #333; 
+    padding-top: 15px;
+">
+    <span>总计消费:</span>
+    <span>¥ {total_spent:,.0f}</span>
+</div>
+</div>
     """
     
     # 4. 【核心修复点】渲染 HTML
