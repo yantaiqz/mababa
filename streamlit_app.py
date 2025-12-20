@@ -9,7 +9,7 @@ import time
 # 1. 基础配置
 # ==========================================
 st.set_page_config(
-    page_title="花光马爸爸的钱 | Spend Billions",
+    page_title="花光大佬的钱 | Spend Billions",
     page_icon="💸",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -21,18 +21,17 @@ st.set_page_config(
 LANG_TEXT = {
     "zh": {
         "title": "花光{name}的钱",
-        "subtitle": "你现在拥有 {money}。这钱不花完，别想下班！",
+        "subtitle": "你现在拥有 **{money}**。这钱不花完，别想下班！",
         "receipt_title": "购物清单",
         "total_spent": "实付金额",
         "balance_zero": "恭喜你！你已经身无分文，可以安心退休了！",
         "toast_no_money": "余额不足！大佬也要精打细算！",
         "coffee_btn": "☕ 请开发者喝咖啡",
-        "coffee_title": " ",
+        "coffee_title": "支持作者",
         "coffee_desc": "如果这个小游戏让你摸鱼更快乐，欢迎投喂！",
         "pay_wechat": "微信支付",
         "pay_alipay": "支付宝",
         "pay_paypal": "PayPal",
-        "more_label": "✨ 更多乐子",
         "unit_cn": "杯",
         "unit_total": "总计投入",
         "pay_success": "收到！感谢打赏！代码写得更有劲了！❤️",
@@ -53,12 +52,11 @@ LANG_TEXT = {
         "balance_zero": "Congratulations! You are broke and free!",
         "toast_no_money": "Not enough money!",
         "coffee_btn": "☕ Buy me a coffee",
-        "coffee_title": " ",
+        "coffee_title": "Support Me",
         "coffee_desc": "If you enjoyed this, consider buying me a coffee!",
         "pay_wechat": "WeChat Pay",
         "pay_alipay": "Alipay",
         "pay_paypal": "PayPal",
-        "more_label": "✨ More Fun",
         "unit_cn": "Cups",
         "unit_total": "Total",
         "pay_success": "Received! Thanks for the coffee! ❤️",
@@ -154,16 +152,11 @@ CHARACTERS = {
 # ==========================================
 # 3. 状态与工具
 # ==========================================
-if 'lang' not in st.session_state:
-    st.session_state.lang = 'zh'
-if 'char_key' not in st.session_state:
-    st.session_state.char_key = 'jack'
-if 'cart' not in st.session_state:
-    st.session_state.cart = {}
-if 'visitor_id' not in st.session_state:
-    st.session_state["visitor_id"] = str(uuid.uuid4())
-if 'coffee_num' not in st.session_state:
-    st.session_state.coffee_num = 1
+if 'lang' not in st.session_state: st.session_state.lang = 'zh'
+if 'char_key' not in st.session_state: st.session_state.char_key = 'jack'
+if 'cart' not in st.session_state: st.session_state.cart = {}
+if 'visitor_id' not in st.session_state: st.session_state["visitor_id"] = str(uuid.uuid4())
+if 'coffee_num' not in st.session_state: st.session_state.coffee_num = 1
 
 def get_txt(key): return LANG_TEXT[st.session_state.lang][key]
 def get_char(): return CHARACTERS[st.session_state.char_key]
@@ -200,158 +193,140 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 4. CSS (核心视觉与按钮修复)
+# 4. CSS (布局与视觉深度优化)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
 
 st.markdown(f"""
 <style>
-    /* 全局背景 */
-    .stApp {{ background-color: #f1f2f6; }}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
     
-    /* 1. 核心布局限制 */
-    .block-container {{
-        max-width: 1000px !important;
-        padding-top: 1rem !important;
-        padding-bottom: 5rem !important;
+    /* 全局重置 */
+    .stApp {{ 
+        background-color: #f3f4f6; 
+        font-family: 'Inter', sans-serif;
     }}
     
-    /* 隐藏多余元素 */
+    /* 1. 核心布局容器：限制最大宽度，居中，去除多余padding */
+    .block-container {{
+        max-width: 900px !important;
+        padding-top: 1rem !important;
+        padding-bottom: 3rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }}
+    
+    /* 隐藏 Streamlit 默认组件 */
     #MainMenu, footer, header {{visibility: hidden;}}
     
-    /* 2. 粘性头部 (Sticky Header) */
+    /* 2. 磨砂玻璃粘性头部 (Glassmorphism Sticky Header) */
     .header-container {{
         position: sticky; top: 0; z-index: 999;
-        background: linear-gradient(180deg, {theme_colors[0]}, {theme_colors[1]});
-        color: white; padding: 15px 0; text-align: center;
-        font-weight: 800; font-size: 2.2rem;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
-        margin-bottom: 30px;
-        margin-left: -20px; margin-right: -20px; /* 撑开宽度 */
-        border-radius: 0 0 16px 16px;
+        background: linear-gradient(180deg, {theme_colors[0]}ee, {theme_colors[1]}dd); /* 增加透明度 */
+        backdrop-filter: blur(12px); /* 磨砂效果 */
+        color: white; 
+        padding: 12px 0; 
+        text-align: center;
+        font-weight: 800; 
+        font-size: 2.2rem;
+        font-family: 'JetBrains Mono', monospace; /* 数字用等宽字体 */
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        margin-bottom: 25px;
+        margin-left: -1rem; margin-right: -1rem; /* 抵消 block-container 的 padding */
+        border-radius: 0 0 20px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }}
     
-    /* 3. 商品卡片容器 (原生边框容器样式优化) */
+    /* 3. 商品卡片 (st.container) 优化 */
     [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] {{
         background-color: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 1px solid rgba(229, 231, 235, 0.5);
     }}
     [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"]:hover {{
-        transform: translateY(-4px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1);
         border-color: {theme_colors[0]};
     }}
     
-    /* === 4. Emoji 按钮终极修复 === */
-    /* 策略：使用 type="tertiary" 的按钮，
-       并用 CSS 强制覆盖所有状态（Normal, Hover, Active, Focus）
-       使其永远背景透明、无边框、无动效 
-    */
+    /* 4. Emoji 按钮 (完全透明 + 点击反馈) */
     button[kind="tertiary"] {{
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        color: inherit !important;
         padding: 0 !important;
-        margin: 0 !important;
-        transition: none !important; /* 移除动效 */
+        transition: transform 0.1s !important;
     }}
-    
-    button[kind="tertiary"]:hover,
-    button[kind="tertiary"]:active,
-    button[kind="tertiary"]:focus {{
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: inherit !important;
-        outline: none !important;
-    }}
-    
-    /* 放大 Emoji 字体 */
+    button[kind="tertiary"]:hover {{ transform: scale(1.1) !important; }}
+    button[kind="tertiary"]:active {{ transform: scale(0.9) !important; }}
     button[kind="tertiary"] p {{
-        font-size: 4.5rem !important; 
-        line-height: 1.2 !important;
-        margin-bottom: 0px !important;
+        font-size: 4rem !important; 
+        margin: 0 !important;
         padding-top: 5px !important;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }}
     
-    /* 商品文字信息 */
+    /* 5. 文本与数字优化 */
     .item-name {{ 
-        font-size: 1.1rem; font-weight: 800; color: #111; 
-        height: 40px; display: flex; align-items: center; justify-content: center; 
-        line-height: 1.2; text-align: center; margin-bottom: 2px;
+        font-size: 1rem; font-weight: 700; color: #1f2937; 
+        height: 36px; display: flex; align-items: center; justify-content: center; 
+        line-height: 1.2; text-align: center; margin-bottom: 4px;
     }}
     .item-price {{ 
-        color: {theme_colors[1]}; font-weight: 700; font-size: 1rem; 
-        text-align: center; margin-bottom: 12px;
+        color: {theme_colors[1]}; font-weight: 600; font-size: 0.9rem; 
+        text-align: center; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;
     }}
     
-    /* 操作按钮组 (-, +, 数量) */
-    /* 仅针对 secondary/primary 类型的按钮进行样式微调，避免影响 tertiary 的 emoji */
+    /* 6. 操作按钮美化 */
     button[kind="secondary"], button[kind="primary"] {{ 
-        min-height: 38px;
-        border-radius: 8px;
-        font-weight: 700;
-        transition: all 0.1s;
+        min-height: 36px; border-radius: 10px; font-weight: 700; border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }}
     
-    /* 数量显示 */
+    /* 数量显示框 */
     .count-display {{
-        text-align: center; line-height: 38px; 
-        font-weight: 800; color: #333; font-size: 1.1rem;
-        background: #f8f9fa; border-radius: 8px;
+        text-align: center; line-height: 36px; 
+        font-weight: 800; color: #374151; font-size: 1.1rem;
+        background: #f9fafb; border-radius: 10px; 
+        border: 1px solid #e5e7eb; font-family: 'JetBrains Mono', monospace;
     }}
 
-    /* === 5. 账单与统计区域 === */
+    /* 7. 账单拟物化 (Receipt) */
     .bill-container {{ 
-        background: white; margin: 30px auto; max-width: 450px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; 
+        background: white; margin: 30px auto; max-width: 420px; 
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12); border-radius: 6px; overflow: hidden; 
+        position: relative;
     }}
-    .bill-footer {{ 
-        background: #fafafa; padding: 20px; text-align: center; border-top: 1px dashed #eee; 
-    }}
-    
-    /* 微信 */
-    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 20px; text-align: center; font-weight: bold; font-size: 1.1rem; }}
-    .bill-wechat-total {{ font-size: 2.5rem; font-weight: bold; text-align: center; margin: 25px 0 5px 0; color: #000; }}
-    /* 支付宝 */
-    .bill-alipay-header {{ background: #1677ff; color: white; padding: 15px 20px; display: flex; justify-content: space-between; font-weight: 600; }}
-    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: bold; font-size: 1.4rem; border-top: 1px solid #eee; color: #1677ff; }}
-    /* PayPal */
-    .bill-paypal {{ border: 1px solid #e0e0e0; }}
-    .bill-paypal-header {{ background: #003087; color: white; padding: 25px; }}
-    .bill-paypal-total {{ font-size: 2.8rem; color: #003087; text-align: center; margin: 30px 0; font-weight: 300; }}
-    
-    /* 咖啡打赏卡片 */
-    .coffee-card {{
-        background: white; border: 1px solid #eee; border-radius: 16px;
-        padding: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }}
-
-    /* 更多按钮样式 - 与语言按钮统一 */
-    .neal-btn {{
-        width: 100%;
-        padding: 0.4rem 0;
-        background-color: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        color: #333;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: none !important;
-    }}
-    .neal-btn:hover {{
-        background-color: #f9fafb;
-        border-color: #d1d5db;
-    }}
-    .neal-btn-link {{
-        text-decoration: none;
+    /* 锯齿边缘效果 (伪元素模拟) */
+    .bill-container::after {{
+        content: ""; position: absolute; bottom: -5px; left: 0; right: 0; height: 10px;
+        background: radial-gradient(circle, transparent 70%, white 75%) 0 0 / 10px 10px repeat-x;
+        transform: rotate(180deg);
     }}
     
+    .bill-footer {{ background: #fafafa; padding: 25px; text-align: center; border-top: 2px dashed #eee; }}
+    
+    /* 皮肤微调 */
+    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
+    .bill-wechat-total {{ font-size: 2.8rem; font-weight: 800; text-align: center; margin: 15px 0; color: #111; font-family: 'JetBrains Mono'; }}
+    
+    .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
+    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.5rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
+    
+    .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
+    .bill-paypal-total {{ font-size: 3rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
+    
+    /* 统计条 */
+    .stats-bar {{
+        display: flex; justify-content: center; gap: 25px; margin-top: 40px; 
+        padding: 15px 25px; background-color: white; border-radius: 50px; 
+        border: 1px solid #eee; color: #6b7280; font-size: 0.85rem; 
+        width: fit-content; margin-left: auto; margin-right: auto; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -359,54 +334,37 @@ st.markdown(f"""
 # 5. 主页面逻辑
 # ==========================================
 
-
-# 导航栏布局（5:1:1 比例，对齐且样式统一）
-col_char_btns, col_lang, col_more = st.columns([5, 1, 1], gap="small")
-
+# A. 导航栏 (Icon Style Buttons)
+col_char_btns, col_lang = st.columns([5, 1], gap="small")
 with col_char_btns:
     c_cols = st.columns(len(CHARACTERS))
     for idx, (key, data) in enumerate(CHARACTERS.items()):
         with c_cols[idx]:
-            # 人物切换按钮
-            btn_label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-            if st.button(btn_label, key=f"btn_char_{key}", use_container_width=True):
+            # 简洁的人物切换按钮
+            label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+            if st.button(label, key=f"btn_char_{key}", use_container_width=True):
                 switch_char(key)
                 st.rerun()
-
 with col_lang:
-    # 语言切换按钮（样式统一）
-    lang_label = "EN" if st.session_state.lang == 'zh' else "中"
-    if st.button(lang_label, key="btn_lang", use_container_width=True):
+    if st.button("🌐 " + ("EN" if st.session_state.lang == 'zh' else "中"), use_container_width=True):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
-with col_more:
-    # 修复：添加按钮文字 + 有效链接 + 统一样式
-    # 可将 href 替换为实际需要的链接（如GitHub、关于页等）
-
-
-    st.markdown(f"""
-        <a href="https://laodeng.streamlit.app/" target="_blank" class="neal-btn-link">
-            <button class="neal-btn">{get_txt('more_label')}</button>
-        </a>
-    """, unsafe_allow_html=True)
-
-
-# B. 标题与余额 (视觉中心)
+# B. 标题与余额
 balance, total_spent = calculate_balance()
 c_key = st.session_state.char_key
 currency = current_char['currency']
 char_name = current_char['name_zh'] if st.session_state.lang == 'zh' else current_char['name_en']
 
 st.markdown(f"<br>", unsafe_allow_html=True)
-st.markdown(f"<h1 style='text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align: center; font-size: 2.8rem; margin-bottom: 0.2rem; letter-spacing: -1px;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
 money_str = f"{currency}{current_char['money']:,}"
-st.markdown(f"<div style='text-align: center; color: #666; font-size: 1rem; margin-bottom: 20px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align: center; color: #6b7280; font-weight: 500; margin-bottom: 25px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
 
 # 粘性余额条
 st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# C. 商品网格 (经典3列布局)
+# C. 商品网格 (3列)
 items = current_char['items']
 cols_per_row = 3
 for i in range(0, len(items), cols_per_row):
@@ -417,21 +375,18 @@ for i in range(0, len(items), cols_per_row):
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
             
             with cols[j]:
-                # 使用原生容器，利用CSS美化
-                with st.container(border=True):
-                    
-                    # 1. 巨大的 Emoji 按钮 (点击购买)
-                    # 关键修改：使用 type="tertiary" 配合 CSS 消除默认样式
+                with st.container(border=True): 
+                    # 1. Emoji 按钮 (透明无Hover背景)
                     if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True, type="tertiary"):
                         click_item_add(item['id'], item['price'], balance)
                     
-                    # 2. 信息区 (紧凑)
+                    # 2. 信息区
                     st.markdown(f"""
                         <div class="item-name">{item_name}</div>
                         <div class="item-price">{currency} {item['price']:,}</div>
                     """, unsafe_allow_html=True)
                     
-                    # 3. 底部操作区 (grid 布局)
+                    # 3. 底部操作区
                     b1, b2, b3 = st.columns([1, 1.2, 1], gap="small")
                     with b1: 
                         st.button("－", key=f"dec_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], -1, item['price'], balance), use_container_width=True)
@@ -457,7 +412,7 @@ if total_spent > 0:
 
     qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://mababa.streamlit.app"
     
-    # 构造账单HTML
+    # 账单 HTML
     bill_html = ""
     if bill_type == 'wechat':
         bill_html = f"""
@@ -490,7 +445,7 @@ if total_spent > 0:
         <div class="bill-container bill-paypal">
             <div class="bill-paypal-header"><div class="bill-paypal-logo" style="font-size: 1.5rem; font-weight: 900; font-style: italic;">PayPal</div><div style="font-size: 0.9rem; opacity: 0.8;">{datetime.datetime.now().strftime('%Y-%m-%d')}</div></div>
             <div class="bill-paypal-total">{currency}{total_spent:,.0f}</div>
-            <div style="padding: 0 30px;"><div style="font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Transaction Details</div>
+            <div style="padding: 0 30px;"><div style="font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">DETAILS</div>
         """
         for name, cnt, cost in purchased_items:
             bill_html += f"""<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem;"><span>{name} ({cnt})</span><span>{currency}{cost:,.0f}</span></div>"""
@@ -498,22 +453,20 @@ if total_spent > 0:
             <div class="bill-footer" style="margin-top: 30px;"><img src="{qr_url}" style="width: 80px; height: 80px;"><div style="font-size: 0.8rem; color: #aaa; margin-top: 8px;">Scan to challenge Elon</div></div>
         </div>"""
 
-    # 渲染账单预览
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.markdown(bill_html, unsafe_allow_html=True)
         
-        # 分享功能区域
+        # 分享弹窗
         st.write("")
-        # 定义分享弹窗
         @st.dialog(get_txt("share_modal_title"), width="large")
         def show_share_modal(html, amount, count):
             st.markdown(html, unsafe_allow_html=True)
             share_text = get_txt('share_copy_text').format(amount=amount, item_count=count)
             st.markdown(f"""
-                <div style="margin-top: 20px; padding: 20px; background: #eef2f5; border-radius: 12px; text-align: center;">
-                    <div style="font-weight: bold; color: #333; margin-bottom: 10px;">{get_txt('share_prompt')}</div>
-                    <code style="display: block; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 6px; color: #555; word-break: break-all;">{share_text}</code>
+                <div style="margin-top: 25px; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: center; border:1px solid #e2e8f0;">
+                    <div style="font-weight: 700; color: #333; margin-bottom: 10px;">{get_txt('share_prompt')}</div>
+                    <code style="display: block; padding: 12px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #475569; word-break: break-all; font-family: 'JetBrains Mono', monospace;">{share_text}</code>
                 </div>
             """, unsafe_allow_html=True)
 
@@ -530,9 +483,9 @@ if total_spent > 0:
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
 with c_btn_col2:
-    @st.dialog(" " + get_txt('coffee_title'), width="small")
+    @st.dialog("☕ " + get_txt('coffee_title'), width="small")
     def show_coffee_window():
-        st.markdown(f"""<div style="background:white; border:1px solid #eee; border-radius:12px; padding:10px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-bottom:15px;"><p>{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div style="background:white; border:1px solid #eee; border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-bottom:20px;"><p style="margin:0; color:#555;">{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
         presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
         def set_val(n): st.session_state.coffee_num = n
         cols = st.columns(3, gap="small")
@@ -543,7 +496,7 @@ with c_btn_col2:
         c1, c2 = st.columns([1, 1], gap="small")
         with c1: cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="collapsed")
         total = cnt * 10
-        with c2: st.markdown(f"""<div style="background:#fff0f0; border:1px dashed #ffcccc; border-radius:8px; padding:5px; text-align:center;"><div style="color:#d9534f; font-weight:900; font-size:1.5rem;">{total}</div></div>""", unsafe_allow_html=True)
+        with c2: st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
         t1, t2 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay')])
         def show_qr(img_path):
             if os.path.exists(img_path): st.image(img_path, use_container_width=True)
@@ -586,8 +539,9 @@ def track_stats():
 
 today_uv, total_uv, today_pv = track_stats()
 st.markdown(f"""
-<div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; padding: 15px; background-color: white; border-radius: 12px; border: 1px solid #e9ecef; color: #666; font-size: 0.85rem; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-    <div style="text-align: center;"><div>{get_txt('visitor_today')}: <b>{today_uv}</b></div></div>
-    <div style="border-left:1px solid #eee; padding-left:20px; text-align: center;"><div>{get_txt('visitor_total')}: <b>{total_uv}</b></div></div>
+<div class="stats-bar">
+    <div style="text-align: center;"><div>{get_txt('visitor_today')}</div><div style="font-weight:700; color:#111;">{today_uv}</div></div>
+    <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('visitor_total')}</div><div style="font-weight:700; color:#111;">{total_uv}</div></div>
+    <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('pv_today')}</div><div style="font-weight:700; color:#111;">{today_pv}</div></div>
 </div><br><br>
 """, unsafe_allow_html=True)
