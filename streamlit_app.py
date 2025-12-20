@@ -9,7 +9,7 @@ import time
 # 1. 基础配置
 # ==========================================
 st.set_page_config(
-    page_title="花光大佬的钱 | Spend Billions",
+    page_title="花光马爸爸的钱 | Spend Billions",
     page_icon="💸",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -27,7 +27,7 @@ LANG_TEXT = {
         "balance_zero": "恭喜你！你已经身无分文，可以安心退休了！",
         "toast_no_money": "余额不足！大佬也要精打细算！",
         "coffee_btn": "☕ 请开发者喝咖啡",
-        "coffee_title": "支持作者",
+        "coffee_title": " ",
         "coffee_desc": "如果这个小游戏让你摸鱼更快乐，欢迎投喂！",
         "pay_wechat": "微信支付",
         "pay_alipay": "支付宝",
@@ -35,7 +35,7 @@ LANG_TEXT = {
         "more_label": "✨ 更多乐子",
         "unit_cn": "杯",
         "unit_total": "总计投入",
-        "pay_success": "收到！感谢打赏！代码写得更有劲了！❤️",
+        "pay_success": "收到！感谢打赏。代码写得更有劲了！❤️",
         "visitor_today": "今日 UV",
         "visitor_total": "历史 UV",
         "share_btn": "📤 生成分享海报",
@@ -53,7 +53,7 @@ LANG_TEXT = {
         "balance_zero": "Congratulations! You are broke and free!",
         "toast_no_money": "Not enough money!",
         "coffee_btn": "☕ Buy me a coffee",
-        "coffee_title": "Support Me",
+        "coffee_title": " ",
         "coffee_desc": "If you enjoyed this, consider buying me a coffee!",
         "pay_wechat": "WeChat Pay",
         "more_label": "✨ More fun",
@@ -556,7 +556,7 @@ if total_spent > 0:
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
 with c_btn_col2:
-    @st.dialog("☕ " + get_txt('coffee_title'), width="small")
+    @st.dialog(" " + get_txt('coffee_title'), width="small")
     def show_coffee_window():
         st.markdown(f"""<div style="background:white; border:1px solid #eee; border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-bottom:20px;"><p style="margin:0; color:#555;">{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
         presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
@@ -615,6 +615,5 @@ st.markdown(f"""
 <div class="stats-bar">
     <div style="text-align: center;"><div>{get_txt('visitor_today')}</div><div style="font-weight:700; color:#111;">{today_uv}</div></div>
     <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('visitor_total')}</div><div style="font-weight:700; color:#111;">{total_uv}</div></div>
-    <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('pv_today')}</div><div style="font-weight:700; color:#111;">{today_pv}</div></div>
 </div><br><br>
 """, unsafe_allow_html=True)
