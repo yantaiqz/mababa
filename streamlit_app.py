@@ -275,6 +275,7 @@ with col_lang:
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
+
 # --- B. 标题与余额 ---
 # 重新获取数据（防止切换后未更新）
 current_char = get_char()
@@ -285,7 +286,9 @@ currency = current_char['currency']
 # 标题
 char_name = current_char['name_zh'] if st.session_state.lang == 'zh' else current_char['name_en']
 st.markdown(f"<h1 style='text-align: center; margin-top:-10px;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
-st.markdown(f"<div style='text-align: center; color: #666; margin-bottom: 20px;'>{get_txt('subtitle').format(money=f'{currency}{current_char['money']:,}')}</div>", unsafe_allow_html=True)
+
+# 【修复点】下面这一行：将 ['money'] 改为了 ["money"]
+st.markdown(f"<div style='text-align: center; color: #666; margin-bottom: 20px;'>{get_txt('subtitle').format(money=f'{currency}{current_char["money"]:,}')}</div>", unsafe_allow_html=True)
 
 # 悬浮余额条
 st.markdown(f"""
@@ -293,6 +296,7 @@ st.markdown(f"""
     {currency} {balance:,.0f}
 </div>
 """, unsafe_allow_html=True)
+
 
 # --- C. 商品网格 ---
 items = current_char['items']
