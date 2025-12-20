@@ -9,7 +9,7 @@ import time
 # 1. 基础配置
 # ==========================================
 st.set_page_config(
-    page_title="花光大佬的钱 | Spend Billions",
+    page_title="花光马爸爸的钱 | Spend Billions",
     page_icon="💸",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -40,7 +40,7 @@ LANG_TEXT = {
         "share_btn": "📤 生成分享海报",
         "share_modal_title": "截图分享给朋友",
         "share_prompt": "复制下方文案，配合截图发朋友圈👇",
-        "share_copy_text": "我在《花光大佬的钱》里挥霍了 {amount}！买了 {item_count} 件离谱商品，你也来试试？👉 https://spend-billions.streamlit.app",
+        "share_copy_text": "我在《花光大佬的钱》里挥霍了 {amount}！买了 {item_count} 件离谱商品，你也来试试？👉 https://mababa.streamlit.app",
         "scan_to_play": "长按识别二维码挑战",
         "pv_today": "今日 PV"
     },
@@ -65,7 +65,7 @@ LANG_TEXT = {
         "share_btn": "📤 Share Receipt",
         "share_modal_title": "Share with Friends",
         "share_prompt": "Copy text below & share with screenshot👇",
-        "share_copy_text": "I spent {amount} in 'Spend Billions'! Bought {item_count} items. Can you beat me? 👉 https://spend-billions.streamlit.app",
+        "share_copy_text": "I spent {amount} in 'Spend Billions'! Bought {item_count} items. Can you beat me? 👉 https://mababa.streamlit.app",
         "scan_to_play": "Scan to Play",
         "pv_today": "Today PV"
     }
@@ -550,6 +550,5 @@ st.markdown(f"""
 <div style="display: flex; justify-content: center; gap: 20px; margin-top: 30px; padding: 15px; background-color: white; border-radius: 12px; border: 1px solid #e9ecef; color: #666; font-size: 0.85rem; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
     <div style="text-align: center;"><div>{get_txt('visitor_today')}: <b>{today_uv}</b></div></div>
     <div style="border-left:1px solid #eee; padding-left:20px; text-align: center;"><div>{get_txt('visitor_total')}: <b>{total_uv}</b></div></div>
-    #<div style="border-left:1px solid #eee; padding-left:20px; text-align: center;"><div>{get_txt('pv_today')}: <b>{today_pv}</b></div></div>
 </div><br><br>
 """, unsafe_allow_html=True)
