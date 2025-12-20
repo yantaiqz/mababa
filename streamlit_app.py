@@ -32,6 +32,7 @@ LANG_TEXT = {
         "pay_wechat": "微信支付",
         "pay_alipay": "支付宝",
         "pay_paypal": "PayPal",
+        "more_label": "✨ 跟多乐子",
         "unit_cn": "杯",
         "unit_total": "总计投入",
         "pay_success": "收到！感谢打赏！代码写得更有劲了！❤️",
@@ -57,6 +58,7 @@ LANG_TEXT = {
         "pay_wechat": "WeChat Pay",
         "pay_alipay": "Alipay",
         "pay_paypal": "PayPal",
+        "more_label": "✨ More Fun",
         "unit_cn": "Cups",
         "unit_total": "Total",
         "pay_success": "Received! Thanks for the coffee! ❤️",
@@ -383,7 +385,7 @@ with col_more:
     # 可将 href 替换为实际需要的链接（如GitHub、关于页等）
     st.markdown("""
         <a href="https://github.com" target="_blank" class="neal-btn-link">
-            <button class="neal-btn">更多</button>
+            <button class="neal-btn">{get_txt('more_label')}</button>
         </a>
     """, unsafe_allow_html=True)
 
