@@ -9,7 +9,7 @@ import time
 # 1. 基础配置 (必须位于最前)
 # ==========================================
 st.set_page_config(
-    page_title="花光大佬的钱 | Spend Billions",
+    page_title="花光马爸爸的钱 | Spend Billions",
     page_icon="💸",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -22,7 +22,7 @@ st.set_page_config(
 LANG_TEXT = {
     "zh": {
         "title": "花光{name}的钱",
-        "subtitle": "你现在拥有 **{money}**。这钱不花完，别想下班！",
+        "subtitle": "你现在拥有 {money}。这钱不花完，别想下班！",
         "btn_more": "✨ 更多好玩应用",
         "receipt_title": "🧾 购物清单",
         "total_spent": "总计消费",
@@ -372,11 +372,11 @@ for i in range(0, len(items), cols_per_row):
                 card_key = f"card_{c_key}_{item['id']}"
                 if st.button(
                     label=f"""
-                    <div class="item-card">
-                        <div class="item-emoji">{item['icon']}</div>
-                        <div class="item-name">{item_name}</div>
-                        <div class="item-price">{currency} {item['price']:,}</div>
-                    </div>
+<div class="item-card">
+    <div class="item-emoji">{item['icon']}</div>
+    <div class="item-name">{item_name}</div>
+    <div class="item-price">{currency} {item['price']:,}</div>
+</div>
                     """,
                     key=card_key,
                     use_container_width=True,
