@@ -329,38 +329,87 @@ st.markdown(f"""
         width: fit-content; margin-left: auto; margin-right: auto; 
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }}
+
+    /* 8. 右上角按钮样式 */
+    .top-right-btn {{
+        width: 100%;
+        padding: 0.5rem 0;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        color: #333;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-weight: 600;
+    }}
+    .top-right-btn:hover {{
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        transform: translateY(-1px);
+    }}
+    .top-right-link {{
+        text-decoration: none;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. 主页面逻辑
+# 5. 主页面逻辑 (核心布局调整)
 # ==========================================
 
-# A. 导航栏 (Icon Style Buttons)
-col_char_btns, col_lang , col_more = st.columns([5, 1, 1], gap="small")
-with col_char_btns:
-    c_cols = st.columns(len(CHARACTERS))
-    for idx, (key, data) in enumerate(CHARACTERS.items()):
-        with c_cols[idx]:
-            # 简洁的人物切换按钮
-            label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-            if st.button(label, key=f"btn_char_{key}", use_container_width=True):
-                switch_char(key)
-                st.rerun()
+# A. 右上角按钮区域 (语言切换 + More Fun)
+# 创建一行，左空右对齐两个按钮
+col_empty, col_lang, col_more = st.columns([10, 1, 1.2], gap="small")
+
 with col_lang:
-    if st.button("🌐 " + ("EN" if st.session_state.lang == 'zh' else "中"), use_container_width=True):
+    # 语言切换按钮
+    if st.button("🌐 " + ("EN" if st.session_state.lang == 'zh' else "中"), 
+                key="btn_lang", 
+                use_container_width=True,
+                type="secondary"):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
 with col_more:
-    # 核心修复：f-string + 正确调用多语言函数
+    # More Fun按钮
     st.markdown(f"""
-        <a href="https://laodeng.streamlit.app/" target="_blank" class="neal-btn-link">
-            <button class="neal-btn">{get_txt('more_label')}</button>
+        <a href="https://laodeng.streamlit.app/" target="_blank" class="top-right-link">
+            <button class="top-right-btn">{get_txt('more_label')}</button>
         </a>
     """, unsafe_allow_html=True)
 
-# B. 标题与余额
+# B. 人物切换按钮区域 (单独一行，居中显示)
+st.markdown("<div style='margin: 15px 0;'></div>", unsafe_allow_html=True)
+# 创建居中的人物按钮行
+char_col1, char_col2, char_col3, char_col4 = st.columns([1, 1, 1, 1], gap="medium")
+chars_list = list(CHARACTERS.items())
+
+with char_col1:
+    pass  # 左侧留白
+
+with char_col2:
+    key, data = chars_list[0]
+    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
+        switch_char(key)
+        st.rerun()
+
+with char_col3:
+    key, data = chars_list[1]
+    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
+        switch_char(key)
+        st.rerun()
+
+with char_col4:
+    key, data = chars_list[2]
+    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
+        switch_char(key)
+        st.rerun()
+
+# C. 标题与余额
 balance, total_spent = calculate_balance()
 c_key = st.session_state.char_key
 currency = current_char['currency']
@@ -374,7 +423,7 @@ st.markdown(f"<div style='text-align: center; color: #6b7280; font-weight: 500; 
 # 粘性余额条
 st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# C. 商品网格 (3列)
+# D. 商品网格 (3列)
 items = current_char['items']
 cols_per_row = 3
 for i in range(0, len(items), cols_per_row):
@@ -406,7 +455,7 @@ for i in range(0, len(items), cols_per_row):
                     with b3: 
                         st.button("＋", key=f"inc_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], 1, item['price'], balance), type="primary", use_container_width=True)
 
-# D. 账单与分享功能
+# E. 账单与分享功能
 if total_spent > 0:
     st.markdown("<br><br>", unsafe_allow_html=True)
     bill_type = current_char['bill_type']
