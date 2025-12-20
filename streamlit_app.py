@@ -216,31 +216,43 @@ for i in range(0, len(ITEMS), cols_per_row):
                         )
                     st.markdown("<br>", unsafe_allow_html=True)
 
+
 # ==========================================
-# 5. 底部：购物小票
+# 5. 底部：购物小票 (修复版)
 # ==========================================
+# 实时获取最新消费金额（必须放在账单渲染前）
+balance, total_spent = get_real_time_balance_and_spent()
+
 if total_spent > 0:
     st.markdown("---")
-    receipt_html = "<div class='receipt'><h2>🧾 支付宝账单</h2><hr>"
-    
+    # 初始化账单HTML（确保根标签完整闭合）
+    receipt_html = """
+    <div class='receipt'>
+        <h2>🧾 支付宝账单</h2>
+        <hr>
+    """
+    # 遍历商品生成账单行（避免拼接错误，用f-string+换行）
     for item in ITEMS:
         count = st.session_state[item['id']]
         if count > 0:
+            item_total = item['price'] * count
+            # 用f-string格式化每行，避免手动拼接出错
             receipt_html += f"""
             <div style='display: flex; justify-content: space-between; margin: 10px 0;'>
                 <span style='text-align: left;'>{item['name']} x{count}</span>
-                <span style='font-weight: bold;'>¥ {item['price'] * count:,.0f}</span>
+                <span style='font-weight: bold;'>¥ {item_total:,.0f}</span>
             </div>
             """
-            
-    receipt_html += "<hr>"
+    # 补充总计行和闭合标签
     receipt_html += f"""
-    <div style='display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-top: 20px;'>
-        <span>总计消费:</span>
-        <span>¥ {total_spent:,.0f}</span>
+        <hr>
+        <div style='display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-top: 20px;'>
+            <span>总计消费:</span>
+            <span>¥ {total_spent:,.0f}</span>
+        </div>
     </div>
     """
-    receipt_html += "</div>"
+    # 关键：必须开启unsafe_allow_html=True，否则HTML会被转义成源码
     st.markdown(receipt_html, unsafe_allow_html=True)
     
     # 彻底花光彩蛋
