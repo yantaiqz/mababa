@@ -244,10 +244,10 @@ if total_spent > 0:
         count = st.session_state[item['id']]
         if count > 0:
             html_content += f"""
-            <div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                <span style="text-align: left; font-weight: bold;">{item['name']} x{count}</span>
-                <span style="font-weight: bold; color: #e74c3c;">¥ {item['price'] * count:,.0f}</span>
-            </div>
+    <div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+        <span style="text-align: left; font-weight: bold;">{item['name']} x{count}</span>
+        <span style="font-weight: bold; color: #e74c3c;">¥ {item['price'] * count:,.0f}</span>
+    </div>
             """
 
     # 3. 添加总计
