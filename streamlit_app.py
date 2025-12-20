@@ -1,4 +1,5 @@
 import streamlit as st
+import sqlite3
 import uuid
 import datetime
 import os
@@ -193,7 +194,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 4. CSS (稳定版样式)
+# 4. CSS (视觉优化)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -213,24 +214,26 @@ st.markdown(f"""
         box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;
     }}
     
-    /* 商品卡片容器优化 */
-    [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {{
-        background-color: white;
+    /* 核心修复：放大纯 Emoji 按钮的字体，使其成为卡片的主角 */
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button p {{
+        font-size: 3.2rem !important; 
+        line-height: 1.1 !important;
+        margin-bottom: 0px !important;
+    }}
+    /* 让 Emoji 按钮的背景在 Hover 时变色更柔和 */
+    div[data-testid="stVerticalBlock"] div[data-testid="stButton"] button:hover {{
+        border-color: {theme_colors[0]} !important;
+        background-color: #f8f9fa !important;
+        transform: scale(1.02);
     }}
     
-    /* 大号 Emoji 按钮 */
-    /* 找到商品卡片里的第一个按钮（Emoji按钮）并放大 */
-    div[data-testid="stContainer"] button p {{
-        font-size: 3rem !important;
-        line-height: 1.2 !important;
-    }}
-    
-    /* 文字信息 */
-    .item-name {{ font-size: 0.9rem; font-weight: bold; color: #333; height: 35px; display: flex; align-items: center; justify-content: center; line-height: 1.2; text-align: center; margin-top: 5px; }}
-    .item-price {{ color: {theme_colors[1]}; font-weight: bold; font-size: 0.85rem; text-align: center; margin-bottom: 10px; }}
+    /* 文字信息紧凑化 */
+    .item-info {{ text-align: center; margin-top: -10px; margin-bottom: 5px; }}
+    .item-name {{ font-size: 0.85rem; font-weight: bold; color: #333; height: 32px; display: flex; align-items: center; justify-content: center; line-height: 1.1; }}
+    .item-price {{ color: {theme_colors[1]}; font-weight: bold; font-size: 0.85rem; }}
     
     /* 操作按钮 (-, +) 尺寸微调 */
-    div.stButton > button {{ padding: 0.2rem 0; min-height: 0px; }}
+    div.stButton > button {{ padding: 0.1rem 0; min-height: 0px; }}
 
     /* 全局容器限制 */
     .content-container {{ max-width: 900px; margin-left: auto; margin-right: auto; }}
@@ -239,17 +242,17 @@ st.markdown(f"""
     .bill-container {{ background: white; margin: 0 auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }}
     .bill-footer {{ background: #f9f9f9; padding: 15px; text-align: center; border-top: 1px dashed #ddd; }}
     
-    /* 微信账单皮肤 */
+    /* 微信样式 */
     .bill-wechat-header {{ background: #2AAD67; color: white; padding: 15px; text-align: center; font-weight: bold; }}
     .bill-wechat-total {{ font-size: 2.2rem; font-weight: bold; text-align: center; margin: 20px 0 5px 0; color: #000; }}
     .bill-wechat-label {{ text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; }}
     
-    /* 支付宝账单皮肤 */
+    /* 支付宝样式 */
     .bill-alipay-header {{ background: #1677ff; color: white; padding: 15px; display: flex; justify-content: space-between; }}
     .bill-alipay-row {{ display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.95rem; }}
     .bill-alipay-total {{ padding: 15px; text-align: right; font-weight: bold; font-size: 1.2rem; border-top: 1px solid #eee; }}
     
-    /* PayPal 账单皮肤 */
+    /* PayPal 样式 */
     .bill-paypal {{ border: 1px solid #e0e0e0; border-radius: 4px; }}
     .bill-paypal-header {{ background: #003087; color: white; padding: 20px; }}
     .bill-paypal-total {{ font-size: 2.5rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; }}
@@ -298,12 +301,12 @@ money_str = f"{currency}{current_char['money']:,}"
 st.markdown(f"<div style='text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 10px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
 st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# C. 商品网格 (3列布局 + 修复显示)
+# C. 商品网格 (4列布局 - 更紧凑)
 items = current_char['items']
-cols_per_row = 3
+cols_per_row = 4 # 改为4列，每行更多商品
 for i in range(0, len(items), cols_per_row):
     # 外层列：左右留空布局
-    outer_cols = st.columns([0.2, 1, 1, 1, 0.2]) 
+    outer_cols = st.columns([0.1, 1, 1, 1, 1, 0.1]) 
     
     for j in range(cols_per_row):
         if i + j < len(items):
@@ -311,28 +314,29 @@ for i in range(0, len(items), cols_per_row):
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
             
             with outer_cols[j+1]: 
-                # 使用原生 container 自带边框，替代 CSS Hack 的 div
-                # 这会自动生成一个漂亮的卡片框
+                # 使用原生 container 自带边框
                 with st.container(border=True):
                     
-                    # 1. 大号 Emoji 按钮 (点击购买)
-                    # 直接把 Emoji 放在 label 里，是最安全的
-                    if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True):
+                    # 1. 大号 Emoji 按钮 (标签只放 Emoji)
+                    # key 保证唯一性
+                    if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True, help=f"点击购买 {item_name}"):
                         click_item_add(item['id'], item['price'], balance)
                     
-                    # 2. 信息展示
+                    # 2. 信息展示 (紧凑)
                     st.markdown(f"""
+                    <div class="item-info">
                         <div class="item-name">{item_name}</div>
                         <div class="item-price">{currency} {item['price']:,}</div>
+                    </div>
                     """, unsafe_allow_html=True)
                     
                     # 3. 底部操作按钮
-                    b1, b2, b3 = st.columns([1, 1.2, 1])
+                    b1, b2, b3 = st.columns([1, 1.5, 1])
                     with b1: 
                         st.button("－", key=f"dec_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], -1, item['price'], balance), use_container_width=True)
                     with b2:
                         cnt = st.session_state.cart[c_key].get(item['id'], 0)
-                        st.markdown(f"<div style='text-align: center; line-height: 2.2rem; font-weight: bold; color:#444;'>{cnt}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div style='text-align: center; line-height: 2.2rem; font-weight: bold; color:#444; font-size: 0.9rem;'>{cnt}</div>", unsafe_allow_html=True)
                     with b3: 
                         st.button("＋", key=f"inc_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], 1, item['price'], balance), type="primary", use_container_width=True)
                 
