@@ -1,9 +1,9 @@
 import streamlit as st
+import sqlite3
 import uuid
 import datetime
-import time
 import os
-
+import time
 
 # ==========================================
 # 1. 基础配置
@@ -198,34 +198,44 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 4. CSS (视觉核心 - 修复按钮样式)
+# 4. CSS (核心视觉与按钮修复)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
 
 st.markdown(f"""
 <style>
+    /* 全局背景 */
     .stApp {{ background-color: #f1f2f6; }}
     
-    /* 核心布局 */
-    .block-container {{ max-width: 1000px !important; padding-top: 1rem; padding-bottom: 5rem; }}
+    /* 1. 核心布局限制 */
+    .block-container {{
+        max-width: 1000px !important;
+        padding-top: 1rem !important;
+        padding-bottom: 5rem !important;
+    }}
+    
+    /* 隐藏多余元素 */
     #MainMenu, footer, header {{visibility: hidden;}}
     
-    /* 顶部导航 */
+    /* 2. 粘性头部 (Sticky Header) */
     .header-container {{
         position: sticky; top: 0; z-index: 999;
         background: linear-gradient(180deg, {theme_colors[0]}, {theme_colors[1]});
         color: white; padding: 15px 0; text-align: center;
         font-weight: 800; font-size: 2.2rem;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin-bottom: 30px;
-        margin-left: -20px; margin-right: -20px; border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+        margin-bottom: 30px;
+        margin-left: -20px; margin-right: -20px; /* 撑开宽度 */
+        border-radius: 0 0 16px 16px;
     }}
     
-    /* 商品卡片 (st.container border=True) */
+    /* 3. 商品卡片容器 (原生边框容器样式优化) */
     [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] {{
-        background-color: white; border-radius: 12px;
+        background-color: white;
+        border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        transition: transform 0.2s, box-shadow 0.2s, border 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s;
         border: 1px solid #e5e7eb;
     }}
     [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"]:hover {{
@@ -234,69 +244,91 @@ st.markdown(f"""
         border-color: {theme_colors[0]};
     }}
     
-    /* === 核心修复：Emoji 按钮样式 === */
-    /* 定位逻辑：在边框容器(stVerticalBlockBorderWrapper)内的第一个按钮。
-       强制去除背景、边框、阴影，并移除 Hover/Active 的变色效果。
+    /* === 4. Emoji 按钮终极修复 === */
+    /* 策略：使用 type="tertiary" 的按钮，
+       并用 CSS 强制覆盖所有状态（Normal, Hover, Active, Focus）
+       使其永远背景透明、无边框、无动效 
     */
-    [data-testid="stVerticalBlockBorderWrapper"] button:first-of-type {{
+    button[kind="tertiary"] {{
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0px !important;
-        margin: 0px !important;
-        transition: transform 0.1s !important;
-    }}
-    
-    /* 移除 Hover 时的背景色，只保留轻微的点击反馈 */
-    [data-testid="stVerticalBlockBorderWrapper"] button:first-of-type:hover {{
-        background-color: transparent !important;
-        border: none !important;
         color: inherit !important;
-        /* 移除 hover 放大动效，按需求保持静止或非常微小 */
-        transform: none !important; 
+        padding: 0 !important;
+        margin: 0 !important;
+        transition: none !important; /* 移除动效 */
     }}
     
-    /* 点击时保持透明，仅轻微缩小以示反馈 */
-    [data-testid="stVerticalBlockBorderWrapper"] button:first-of-type:active {{
+    button[kind="tertiary"]:hover,
+    button[kind="tertiary"]:active,
+    button[kind="tertiary"]:focus {{
         background-color: transparent !important;
         border: none !important;
-        transform: scale(0.95) !important;
+        box-shadow: none !important;
+        color: inherit !important;
+        outline: none !important;
     }}
     
     /* 放大 Emoji 字体 */
-    [data-testid="stVerticalBlockBorderWrapper"] button:first-of-type p {{
-        font-size: 4rem !important; 
+    button[kind="tertiary"] p {{
+        font-size: 4.5rem !important; 
         line-height: 1.2 !important;
-        padding-top: 10px !important;
+        margin-bottom: 0px !important;
+        padding-top: 5px !important;
     }}
     
-    /* 商品信息 */
-    .item-name {{ font-size: 1.1rem; font-weight: 800; color: #111; height: 40px; display: flex; align-items: center; justify-content: center; line-height: 1.2; text-align: center; }}
-    .item-price {{ color: {theme_colors[1]}; font-weight: 700; font-size: 1rem; text-align: center; margin-bottom: 10px; }}
+    /* 商品文字信息 */
+    .item-name {{ 
+        font-size: 1.1rem; font-weight: 800; color: #111; 
+        height: 40px; display: flex; align-items: center; justify-content: center; 
+        line-height: 1.2; text-align: center; margin-bottom: 2px;
+    }}
+    .item-price {{ 
+        color: {theme_colors[1]}; font-weight: 700; font-size: 1rem; 
+        text-align: center; margin-bottom: 12px;
+    }}
     
-    /* 底部操作区 (+/- 按钮) 保持默认样式，仅微调大小 */
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] button {{
-        min-height: 38px; border-radius: 8px; border: 1px solid #eee;
+    /* 操作按钮组 (-, +, 数量) */
+    /* 仅针对 secondary/primary 类型的按钮进行样式微调，避免影响 tertiary 的 emoji */
+    button[kind="secondary"], button[kind="primary"] {{ 
+        min-height: 38px;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: all 0.1s;
     }}
     
     /* 数量显示 */
     .count-display {{
-        text-align: center; line-height: 38px; font-weight: 800; color: #333; font-size: 1.1rem;
+        text-align: center; line-height: 38px; 
+        font-weight: 800; color: #333; font-size: 1.1rem;
         background: #f8f9fa; border-radius: 8px;
     }}
 
-    /* 账单样式 */
-    .bill-container {{ background: white; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; }}
-    .bill-footer {{ background: #fafafa; padding: 20px; text-align: center; border-top: 1px dashed #eee; }}
+    /* === 5. 账单与统计区域 === */
+    .bill-container {{ 
+        background: white; margin: 30px auto; max-width: 450px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; 
+    }}
+    .bill-footer {{ 
+        background: #fafafa; padding: 20px; text-align: center; border-top: 1px dashed #eee; 
+    }}
     
-    /* 账单皮肤 */
-    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 20px; text-align: center; font-weight: bold; }}
+    /* 微信 */
+    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 20px; text-align: center; font-weight: bold; font-size: 1.1rem; }}
     .bill-wechat-total {{ font-size: 2.5rem; font-weight: bold; text-align: center; margin: 25px 0 5px 0; color: #000; }}
+    /* 支付宝 */
     .bill-alipay-header {{ background: #1677ff; color: white; padding: 15px 20px; display: flex; justify-content: space-between; font-weight: 600; }}
     .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: bold; font-size: 1.4rem; border-top: 1px solid #eee; color: #1677ff; }}
+    /* PayPal */
     .bill-paypal {{ border: 1px solid #e0e0e0; }}
     .bill-paypal-header {{ background: #003087; color: white; padding: 25px; }}
     .bill-paypal-total {{ font-size: 2.8rem; color: #003087; text-align: center; margin: 30px 0; font-weight: 300; }}
+    
+    /* 咖啡打赏卡片 */
+    .coffee-card {{
+        background: white; border: 1px solid #eee; border-radius: 16px;
+        padding: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -304,13 +336,14 @@ st.markdown(f"""
 # 5. 主页面逻辑
 # ==========================================
 
-# A. 导航栏
+# A. 导航栏 (简单且对齐)
 col_char_btns, col_lang = st.columns([5, 1])
 with col_char_btns:
     c_cols = st.columns(len(CHARACTERS))
     idx = 0
     for key, data in CHARACTERS.items():
         with c_cols[idx]:
+            # 人物切换按钮
             if st.button(f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}", key=f"btn_char_{key}", use_container_width=True):
                 switch_char(key)
                 st.rerun()
@@ -320,7 +353,7 @@ with col_lang:
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
-# B. 标题与余额
+# B. 标题与余额 (视觉中心)
 balance, total_spent = calculate_balance()
 c_key = st.session_state.char_key
 currency = current_char['currency']
@@ -330,9 +363,11 @@ st.markdown(f"<br>", unsafe_allow_html=True)
 st.markdown(f"<h1 style='text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
 money_str = f"{currency}{current_char['money']:,}"
 st.markdown(f"<div style='text-align: center; color: #666; font-size: 1rem; margin-bottom: 20px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
+
+# 粘性余额条
 st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# C. 商品网格 (3列布局)
+# C. 商品网格 (经典3列布局)
 items = current_char['items']
 cols_per_row = 3
 for i in range(0, len(items), cols_per_row):
@@ -343,19 +378,21 @@ for i in range(0, len(items), cols_per_row):
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
             
             with cols[j]:
-                with st.container(border=True): # 关键：使用带边框的原生容器
+                # 使用原生容器，利用CSS美化
+                with st.container(border=True):
                     
-                    # 1. Emoji 按钮 (透明大图标)
-                    if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True):
+                    # 1. 巨大的 Emoji 按钮 (点击购买)
+                    # 关键修改：使用 type="tertiary" 配合 CSS 消除默认样式
+                    if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True, type="tertiary"):
                         click_item_add(item['id'], item['price'], balance)
                     
-                    # 2. 信息区
+                    # 2. 信息区 (紧凑)
                     st.markdown(f"""
                         <div class="item-name">{item_name}</div>
                         <div class="item-price">{currency} {item['price']:,}</div>
                     """, unsafe_allow_html=True)
                     
-                    # 3. 底部操作区
+                    # 3. 底部操作区 (grid 布局)
                     b1, b2, b3 = st.columns([1, 1.2, 1], gap="small")
                     with b1: 
                         st.button("－", key=f"dec_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], -1, item['price'], balance), use_container_width=True)
@@ -412,9 +449,9 @@ if total_spent > 0:
     else: # PayPal
         bill_html = f"""
         <div class="bill-container bill-paypal">
-            <div class="bill-paypal-header"><div style="font-size: 1.5rem; font-weight: 900; font-style: italic;">PayPal</div><div style="font-size: 0.9rem; opacity: 0.8;">{datetime.datetime.now().strftime('%Y-%m-%d')}</div></div>
+            <div class="bill-paypal-header"><div class="bill-paypal-logo" style="font-size: 1.5rem; font-weight: 900; font-style: italic;">PayPal</div><div style="font-size: 0.9rem; opacity: 0.8;">{datetime.datetime.now().strftime('%Y-%m-%d')}</div></div>
             <div class="bill-paypal-total">{currency}{total_spent:,.0f}</div>
-            <div style="padding: 0 30px;"><div style="font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Details</div>
+            <div style="padding: 0 30px;"><div style="font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Transaction Details</div>
         """
         for name, cnt, cost in purchased_items:
             bill_html += f"""<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem;"><span>{name} ({cnt})</span><span>{currency}{cost:,.0f}</span></div>"""
