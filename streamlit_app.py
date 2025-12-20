@@ -21,20 +21,20 @@ st.set_page_config(
 LANG_TEXT = {
     "zh": {
         "title": "花光{name}的钱",
-        "subtitle": "你现在拥有 **{money}**。这钱不花完，别想下班！",
+        "subtitle": "你现在拥有 {money}。这钱不花完，别想下班！",
         "receipt_title": "购物清单",
         "total_spent": "实付金额",
         "balance_zero": "恭喜你！你已经身无分文，可以安心退休了！",
         "toast_no_money": "余额不足！大佬也要精打细算！",
         "coffee_btn": "☕ 请开发者喝咖啡",
-        "coffee_title": "☕ 支持作者",
+        "coffee_title": " ",
         "coffee_desc": "如果这个小游戏让你摸鱼更快乐，欢迎投喂！",
         "pay_wechat": "微信支付",
         "pay_alipay": "支付宝",
         "pay_paypal": "PayPal",
         "unit_cn": "杯",
         "unit_total": "总计投入",
-        "pay_success": "收到！感谢你的 {count} 杯咖啡！代码写得更有劲了！❤️",
+        "pay_success": "收到！感谢打赏！代码写得更有劲了！❤️",
         "visitor_today": "今日 UV",
         "visitor_total": "历史 UV",
         "share_btn": "📤 生成分享海报",
@@ -52,14 +52,14 @@ LANG_TEXT = {
         "balance_zero": "Congratulations! You are broke and free!",
         "toast_no_money": "Not enough money!",
         "coffee_btn": "☕ Buy me a coffee",
-        "coffee_title": "☕ Support Me",
+        "coffee_title": " ",
         "coffee_desc": "If you enjoyed this, consider buying me a coffee!",
         "pay_wechat": "WeChat Pay",
         "pay_alipay": "Alipay",
         "pay_paypal": "PayPal",
         "unit_cn": "Cups",
         "unit_total": "Total",
-        "pay_success": "Received! Thanks for {count} cups! ❤️",
+        "pay_success": "Received! Thanks for the coffee! ❤️",
         "visitor_today": "Today UV",
         "visitor_total": "Total UV",
         "share_btn": "📤 Share Receipt",
@@ -491,7 +491,7 @@ if total_spent > 0:
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
 with c_btn_col2:
-    @st.dialog("☕ " + get_txt('coffee_title'), width="small")
+    @st.dialog(" " + get_txt('coffee_title'), width="small")
     def show_coffee_window():
         st.markdown(f"""<div style="background:white; border:1px solid #eee; border-radius:12px; padding:10px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-bottom:15px;"><p>{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
         presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
