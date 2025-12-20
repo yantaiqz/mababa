@@ -329,6 +329,27 @@ st.markdown(f"""
         background: white; border: 1px solid #eee; border-radius: 16px;
         padding: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }}
+
+    /* 更多按钮样式 - 与语言按钮统一 */
+    .neal-btn {{
+        width: 100%;
+        padding: 0.4rem 0;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        color: #333;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: none !important;
+    }}
+    .neal-btn:hover {{
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+    }}
+    .neal-btn-link {{
+        text-decoration: none;
+    }}
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -336,29 +357,35 @@ st.markdown(f"""
 # 5. 主页面逻辑
 # ==========================================
 
-# A. 导航栏 (简单且对齐)
-col_char_btns, col_lang , col_more= st.columns([5, 1, 1])
+
+# 导航栏布局（5:1:1 比例，对齐且样式统一）
+col_char_btns, col_lang, col_more = st.columns([5, 1, 1], gap="small")
+
 with col_char_btns:
     c_cols = st.columns(len(CHARACTERS))
-    idx = 0
-    for key, data in CHARACTERS.items():
+    for idx, (key, data) in enumerate(CHARACTERS.items()):
         with c_cols[idx]:
             # 人物切换按钮
-            if st.button(f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}", key=f"btn_char_{key}", use_container_width=True):
+            btn_label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+            if st.button(btn_label, key=f"btn_char_{key}", use_container_width=True):
                 switch_char(key)
                 st.rerun()
-        idx += 1
+
 with col_lang:
-    if st.button("EN" if st.session_state.lang == 'zh' else "中", use_container_width=True):
+    # 语言切换按钮（样式统一）
+    lang_label = "EN" if st.session_state.lang == 'zh' else "中"
+    if st.button(lang_label, key="btn_lang", use_container_width=True):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
 with col_more:
+    # 修复：添加按钮文字 + 有效链接 + 统一样式
+    # 可将 href 替换为实际需要的链接（如GitHub、关于页等）
     st.markdown("""
-        <a href="#" target="_blank" class="neal-btn-link">
-            <button class="neal-btn"></button>
-        </a>""", unsafe_allow_html=True)
-
+        <a href="https://github.com" target="_blank" class="neal-btn-link">
+            <button class="neal-btn">更多</button>
+        </a>
+    """, unsafe_allow_html=True)
 
 
 # B. 标题与余额 (视觉中心)
