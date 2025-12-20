@@ -386,7 +386,7 @@ with col_more:
 
 
     st.markdown(f"""
-        <a href="https://github.com" target="_blank" class="neal-btn-link">
+        <a href="https://laodeng.streamlit.app/" target="_blank" class="neal-btn-link">
             <button class="neal-btn">{get_txt('more_label')}</button>
         </a>
     """, unsafe_allow_html=True)
