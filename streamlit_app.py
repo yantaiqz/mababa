@@ -350,16 +350,18 @@ if total_spent > 0:
         item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
         if count > 0:
             html_content += f"""
-            <div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                <span style="text-align: left; font-weight: bold;">{item_name} x{count}</span>
-                <span style="font-weight: bold; color: {current_char['theme_color'][1]};">{currency} {item['price'] * count:,.0f}</span>
-            </div>"""
+<div style="display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+    <span style="text-align: left; font-weight: bold;">{item_name} x{count}</span>
+    <span style="font-weight: bold; color: {current_char['theme_color'][1]};">{currency} {item['price'] * count:,.0f}</span>
+</div>
+            """
             
     html_content += f"""
-        <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 900; margin-top: 20px; border-top: 3px solid #333; padding-top: 15px;">
-            <span>{total_label}:</span><span>{currency} {total_spent:,.0f}</span>
-        </div>
-    </div>"""
+    <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 900; margin-top: 20px; border-top: 3px solid #333; padding-top: 15px;">
+        <span>{total_label}:</span><span>{currency} {total_spent:,.0f}</span>
+    </div>
+</div>
+    """
     
     st.markdown(html_content, unsafe_allow_html=True)
     
