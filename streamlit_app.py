@@ -39,7 +39,7 @@ LANG_TEXT = {
         "visitor_today": "今日 UV",
         "visitor_total": "历史 UV",
         "share_btn": "📤 生成分享海报",
-        "share_modal_title": "截图分享给朋友",
+        "share_modal_title": "截图凡尔赛一下",
         "share_prompt": "复制下方文案，配合截图发朋友圈👇",
         "share_copy_text": "我在《花光大佬的钱》里挥霍了 {amount}！买了 {item_count} 件离谱商品，你也来试试？👉 https://mababa.streamlit.app",
         "scan_to_play": "长按识别二维码挑战",
