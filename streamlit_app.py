@@ -341,8 +341,8 @@ if total_spent > 0:
     total_label = get_txt('total_spent')
     
     html_content = f"""
-    <div style="background-color: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #333; font-family: 'Courier New', Courier, monospace;">
-        <h2 style="text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px; font-weight: 800;">{receipt_title}</h2>
+<div style="background-color: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #333; font-family: 'Courier New', Courier, monospace;">
+    <h2 style="text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 20px; font-weight: 800;">{receipt_title}</h2>
     """
     
     for item in items:
@@ -357,9 +357,9 @@ if total_spent > 0:
             """
             
     html_content += f"""
-    <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 900; margin-top: 20px; border-top: 3px solid #333; padding-top: 15px;">
-        <span>{total_label}:</span><span>{currency} {total_spent:,.0f}</span>
-    </div>
+<div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 900; margin-top: 20px; border-top: 3px solid #333; padding-top: 15px;">
+    <span>{total_label}:</span><span>{currency} {total_spent:,.0f}</span>
+</div>
 </div>
     """
     
