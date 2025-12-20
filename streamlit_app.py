@@ -244,10 +244,11 @@ st.markdown(f"""
     .item-card {{
         background: white; padding: 12px; border-radius: 8px;
         text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        transition: transform 0.2s; height: 100%; display: flex; 
+        transition: transform 0.2s; height: 120px; display: flex; 
         flex-direction: column; justify-content: space-between;
         cursor: pointer;
         margin-bottom: 8px;
+        width: 100%;
     }}
     .item-card:hover {{ 
         transform: translateY(-3px);
@@ -258,6 +259,16 @@ st.markdown(f"""
     .item-name {{ font-size: 1rem; font-weight: bold; color: #333; height: 30px;
                  display: flex; align-items: center; justify-content: center; }}
     .item-price {{ color: {theme_colors[1]}; font-weight: bold; font-size: 0.9rem; margin: 5px 0; }}
+    
+    /* --- 隐藏按钮样式 --- */
+    .hide-btn {{
+        position: relative;
+        top: -128px;
+        opacity: 0;
+        width: 100%;
+        height: 120px;
+        z-index: 10;
+    }}
     
     /* --- 按钮样式 (紧凑) --- */
     div.stButton > button {{
@@ -355,8 +366,6 @@ st.markdown(f"""
 # --- C. 商品网格 (3列布局 + 两边留空) ---
 items = current_char['items']
 cols_per_row = 3 # 固定3列布局
-# 计算总页数/行数（14个商品：3*4=12，最后一行2个）
-total_rows = (len(items) + cols_per_row - 1) // cols_per_row
 
 # 3列布局 + 列间距small + 两边留空
 for i in range(0, len(items), cols_per_row):
@@ -368,24 +377,40 @@ for i in range(0, len(items), cols_per_row):
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
             
             with outer_cols[j+1]: # 中间3列（索引1/2/3）
-                # 商品卡片（点击触发加1）
-                card_key = f"card_{c_key}_{item['id']}"
+                # 步骤1：用markdown渲染商品卡片（视觉层）
+                st.markdown(f"""
+                <div class="item-card" id="card_{c_key}_{item['id']}">
+                    <div class="item-emoji">{item['icon']}</div>
+                    <div class="item-name">{item_name}</div>
+                    <div class="item-price">{currency} {item['price']:,}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 步骤2：添加隐藏的点击按钮（交互层）
+                hide_btn_key = f"hide_btn_{c_key}_{item['id']}"
+                # 渲染隐藏按钮的样式
+                st.markdown(f"""
+                <style>
+                    div[data-testid="stButton"][key="{hide_btn_key}"] {{
+                        position: relative;
+                        top: -128px;
+                        opacity: 0;
+                        width: 100%;
+                        height: 120px;
+                        z-index: 10;
+                    }}
+                </style>
+                """, unsafe_allow_html=True)
+                
+                # 隐藏按钮：点击触发加1
                 if st.button(
-                    label=f"""
-<div class="item-card">
-    <div class="item-emoji">{item['icon']}</div>
-    <div class="item-name">{item_name}</div>
-    <div class="item-price">{currency} {item['price']:,}</div>
-</div>
-                    """,
-                    key=card_key,
+                    label="",  # 空文本
+                    key=hide_btn_key,
                     use_container_width=True,
                     on_click=click_item_add,
-                    args=(item['id'], item['price'], balance),
-                    # 移除按钮默认样式
-                    help=""
+                    args=(item['id'], item['price'], balance)
                 ):
-                    pass # 点击事件由on_click处理
+                    pass
                 
                 # 操作区（紧凑化）
                 b_col1, b_col2, b_col3 = st.columns([1, 2, 1], gap="small")
