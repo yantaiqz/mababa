@@ -337,7 +337,7 @@ st.markdown(f"""
 # ==========================================
 
 # A. 导航栏 (简单且对齐)
-col_char_btns, col_lang = st.columns([5, 1])
+col_char_btns, col_lang , col_more= st.columns([5, 1])
 with col_char_btns:
     c_cols = st.columns(len(CHARACTERS))
     idx = 0
@@ -352,6 +352,14 @@ with col_lang:
     if st.button("EN" if st.session_state.lang == 'zh' else "中", use_container_width=True):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
+
+with col_more:
+    st.markdown("""
+        <a href="#" target="_blank" class="neal-btn-link">
+            <button class="neal-btn"></button>
+        </a>""", unsafe_allow_html=True)
+
+
 
 # B. 标题与余额 (视觉中心)
 balance, total_spent = calculate_balance()
