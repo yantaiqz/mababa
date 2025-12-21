@@ -570,7 +570,6 @@ with c_btn_col2:
             st.markdown(f"""
                 <div class="pay-card">
                     <div class="pay-label {color_class}">{title}</div>
-                    <div class="pay-amount-display {color_class}">{amount_str}</div>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -604,7 +603,7 @@ with c_btn_col2:
         with t3:
             # PayPal 特殊处理：使用 paypal.png (如果不存在则用API生成二维码作为占位), 并提供链接
             # 这里的 qr_data_suffix 设为 PayPal 仅用于生成备用图
-            render_pay_tab("PayPal", f"${usd_total}", "color-paypal", "paypal.png", "PayPal", "https://paypal.me/yourid")
+            render_pay_tab("PayPal", f"${usd_total}", "color-paypal", "paypal.png", "PayPal", "https://paypal.me/ytqz")
         
         st.write("")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
