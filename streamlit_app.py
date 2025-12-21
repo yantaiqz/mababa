@@ -335,7 +335,7 @@ st.markdown(f"""
     /* =================================================================
        New Styles: Unified Payment Card Layout
        ================================================================= */
-    .pay-card {
+    .pay-card {{
         background: #fdfdfd;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -343,32 +343,32 @@ st.markdown(f"""
         text-align: center;
         margin-top: 10px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    .pay-amount-display {
+    }}
+    .pay-amount-display {{
         font-family: 'JetBrains Mono', monospace;
         font-size: 1.8rem;
         font-weight: 800;
         margin: 10px 0;
-    }
-    .pay-label {
+    }}
+    .pay-label {{
         font-size: 0.85rem;
         color: #64748b;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 5px;
-    }
-    .pay-instruction {
+    }}
+    .pay-instruction {{
         font-size: 0.8rem;
         color: #94a3b8;
         margin-top: 15px;
         margin-bottom: 5px;
-    }
+    }}
     
     /* Colors for different payment methods */
-    .color-wechat { color: #2AAD67; }
-    .color-alipay { color: #1677ff; }
-    .color-paypal { color: #003087; }
+    .color-wechat {{ color: #2AAD67; }}
+    .color-alipay { color: #1677ff; }}
+    .color-paypal { color: #003087; }}
     
 </style>
 """, unsafe_allow_html=True)
