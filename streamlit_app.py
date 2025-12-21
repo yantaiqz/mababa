@@ -499,6 +499,7 @@ st.markdown(f"""
         position: relative;
         z-index: 2;
         background-color: #f8f9fa;
+        cursor: pointer;
     }}
     
     /* 照片悬停效果 */
@@ -549,16 +550,9 @@ st.markdown(f"""
         background-color: {theme_colors[1]}10;
     }}
     
-    /* 人物选择按钮 - 完全透明化 */
-    .char-select-button {{
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-        z-index: 3;
-        cursor: pointer;
+    /* 隐藏的按钮容器 */
+    .hidden-buttons {{
+        display: none !important;
     }}
     
     /* 顶部操作栏样式 */
@@ -594,12 +588,6 @@ st.markdown(f"""
         font-size: 2rem;
         color: #999;
     }}
-    
-    /* 人物按钮的焦点状态 */
-    .char-select-button:focus + .char-photo {{
-        outline: 2px solid {theme_colors[0]};
-        outline-offset: 2px;
-    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -634,40 +622,44 @@ st.markdown('<div class="char-buttons-container">', unsafe_allow_html=True)
 chars_list = list(CHARACTERS.items())
 
 # 创建人物卡片
-for key, data in chars_list:
-    # 判断是否为当前选中的人物
-    is_active = st.session_state.char_key == key
-    # 人物名称
-    char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
-    
-    # 人物卡片容器
-    card_class = "char-button-card" + (" char-button-card-active" if is_active else "")
-    photo_class = "char-photo" + (" char-photo-active" if is_active else "")
-    name_class = "char-name" + (" char-name-active" if is_active else "")
-    
-    st.markdown(f"""
-        <div class="{card_class}">
-            <!-- 透明的选择按钮 -->
-            <button class="char-select-button" id="btn_{key}" onclick="document.getElementById('hidden_btn_{key}').click()"></button>
-            
-            <!-- 人物照片 -->
-            <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}" 
-                 onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
-            
-            <!-- 人物名称 -->
-            <div class="{name_class}">{char_name}</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # 隐藏的实际按钮（用于Streamlit交互）
-    hidden_btn_key = f"hidden_btn_{key}"
-    if st.button("", key=hidden_btn_key, style="display: none;"):
-        switch_char(key)
-        st.rerun()
+char_cols = st.columns(3, gap="medium")
+for idx, (key, data) in enumerate(chars_list):
+    with char_cols[idx]:
+        # 判断是否为当前选中的人物
+        is_active = st.session_state.char_key == key
+        # 人物名称
+        char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
+        
+        # 人物卡片容器
+        card_class = "char-button-card" + (" char-button-card-active" if is_active else "")
+        photo_class = "char-photo" + (" char-photo-active" if is_active else "")
+        name_class = "char-name" + (" char-name-active" if is_active else "")
+        
+        # 渲染人物卡片
+        st.markdown(f"""
+            <div class="{card_class}">
+                <!-- 人物照片 -->
+                <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}" 
+                     onclick="document.getElementById('char_btn_{key}').click()"
+                     onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
+                
+                <!-- 人物名称 -->
+                <div class="{name_class}" onclick="document.getElementById('char_btn_{key}').click()">{char_name}</div>
+            </div>
+        """, unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# C. 标题与余额
+# C. 隐藏的按钮区域
+st.markdown('<div class="hidden-buttons">', unsafe_allow_html=True)
+# 创建隐藏的按钮用于处理点击事件
+for key, data in chars_list:
+    if st.button(f"Select {key}", key=f"char_btn_{key}"):
+        switch_char(key)
+        st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+
+# D. 标题与余额
 balance, total_spent = calculate_balance()
 c_key = st.session_state.char_key
 currency = current_char['currency']
@@ -681,7 +673,7 @@ st.markdown(f"<div style='text-align: center; color: #6b7280; font-weight: 500; 
 # 粘性余额条
 st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# D. 商品网格 (响应式布局)
+# E. 商品网格 (响应式布局)
 items = current_char['items']
 st.markdown('<div class="item-grid">', unsafe_allow_html=True)
 
@@ -720,7 +712,7 @@ for i in range(0, len(items), cols_per_row):
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# E. 账单与分享功能
+# F. 账单与分享功能
 if total_spent > 0:
     st.markdown("<br><br>", unsafe_allow_html=True)
     bill_type = current_char['bill_type']
@@ -865,7 +857,6 @@ with c_btn_col2:
                 </a>
             """, unsafe_allow_html=True)
             show_qr("paypal.png", "Paypal")
-            #st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={paypal_link}", width=180)
         
         st.write("")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
