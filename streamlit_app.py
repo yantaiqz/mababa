@@ -379,26 +379,29 @@ st.markdown(f"""
 # 6. 主页面逻辑
 # ==========================================
 
-# 顶部工具栏 - 统一语言切换和更多乐子按钮格式
-st.markdown('<div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">', unsafe_allow_html=True)
+# 顶部操作栏
+st.markdown('<div class="top-actions-bar">', unsafe_allow_html=True)
 col_lang, col_more = st.columns([1, 1.2], gap="small")
 
 with col_lang:
-    # 语言切换按钮 - 使用统一的top-btn样式
-    lang_btn_text = "🌐 EN" if st.session_state.lang == 'zh' else "🌐 中"
-    if st.button(lang_btn_text, key="btn_lang", use_container_width=True):
+    # 1. 语言切换按钮 (逻辑按钮)
+    lang_label = "🌐 EN" if st.session_state.lang == 'zh' else "🌐 中"
+    if st.button(lang_label, key="btn_lang", use_container_width=True, type="secondary"):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
 with col_more:
-    # 更多乐子按钮 - 保持相同样式结构
-    st.markdown(f"""
-        <a href="https://laodeng.streamlit.app/" target="_blank" class="top-btn-link">
-            <button class="top-btn">{get_txt('more_label')}</button>
-        </a>
-    """, unsafe_allow_html=True)
+    # 2. 更多乐子按钮 (链接按钮)
+    # 使用 st.link_button 替代 html <a> 标签，样式与 st.button 完美一致
+    st.link_button(
+        label=get_txt('more_label'), 
+        url="https://laodeng.streamlit.app/", 
+        use_container_width=True, 
+        type="secondary"
+    )
 
 st.markdown('</div>', unsafe_allow_html=True)
+
 
 # --- 人物切换区域 (优化版) ---
 # 使用 Streamlit 原生列布局 + HTML图片展示 + 原生按钮交互
