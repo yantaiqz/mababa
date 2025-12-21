@@ -6,6 +6,7 @@ import os
 import time
 import json
 import re
+import streamlit.components.v1 as components
 
 # ==========================================
 # 1. 基础配置
@@ -23,27 +24,19 @@ st.set_page_config(
 def detect_browser_language():
     """自动检测浏览器语言，优先使用中文，否则英文"""
     try:
-        # 获取请求头中的语言信息
         headers = st.context.headers
         accept_language = headers.get('Accept-Language', 'zh')
-        
-        # 解析语言代码
         lang_codes = re.findall(r'([a-z]{2})(?:-[A-Z]{2})?', accept_language.lower())
-        if 'zh' in lang_codes:
-            return 'zh'
-        elif 'en' in lang_codes:
-            return 'en'
-        else:
-            return 'zh'  # 默认中文
-    except:
-        return 'zh'
+        if 'zh' in lang_codes: return 'zh'
+        elif 'en' in lang_codes: return 'en'
+        else: return 'zh'
+    except: return 'zh'
 
-# 初始化语言设置（优先使用已保存的，否则自动检测）
 if 'lang' not in st.session_state:
     st.session_state.lang = detect_browser_language()
 
 # ==========================================
-# 3. 数据配置
+# 3. 数据配置 (新增 photo_url)
 # ==========================================
 LANG_TEXT = {
     "zh": {
@@ -113,8 +106,8 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "alipay",
         "theme_color": ["#1677ff", "#4096ff"],
-        # 人物照片URL（你可以替换为自己的图片链接）
-        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
+        # 使用真实图片URL，如果失效会自动回退到 Emoji
+        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Jack_Ma_2018.jpg/440px-Jack_Ma_2018.jpg",
         "items": [
             {"id": "zhacai", "name_zh": "涪陵榨菜", "name_en": "Pickles", "price": 3, "icon": "🥒"},
             {"id": "cola", "name_zh": "肥宅快乐水", "name_en": "Coca Cola", "price": 5, "icon": "🥤"},
@@ -140,8 +133,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "wechat",
         "theme_color": ["#2aad67", "#20c06d"],
-        # 人物照片URL
-        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
+        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Pony_Ma_2015.jpg/440px-Pony_Ma_2015.jpg",
         "items": [
             {"id": "sticker", "name_zh": "微信表情包", "name_en": "Sticker Pack", "price": 1, "icon": "🌝"},
             {"id": "music", "name_zh": "QQ音乐绿钻", "name_en": "Music VIP", "price": 18, "icon": "🎵"},
@@ -167,8 +159,7 @@ CHARACTERS = {
         "currency": "$",
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
-        # 人物照片URL
-        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
+        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Elon_Musk_Colorado_2022.jpg/440px-Elon_Musk_Colorado_2022.jpg",
         "items": [
             {"id": "check", "name_zh": "推特蓝标", "name_en": "Blue Check", "price": 8, "icon": "✅"},
             {"id": "starlink_sub", "name_zh": "星链月费", "name_en": "Starlink Sub", "price": 110, "icon": "📡"},
