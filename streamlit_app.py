@@ -114,7 +114,7 @@ CHARACTERS = {
         "bill_type": "alipay",
         "theme_color": ["#1677ff", "#4096ff"],
         # 人物照片URL（你可以替换为自己的图片链接）
-        "photo_url": "https://t7.baidu.com/it/u=1234567890,1234567890&fm=193&f=GIF",
+        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
         "items": [
             {"id": "zhacai", "name_zh": "涪陵榨菜", "name_en": "Pickles", "price": 3, "icon": "🥒"},
             {"id": "cola", "name_zh": "肥宅快乐水", "name_en": "Coca Cola", "price": 5, "icon": "🥤"},
@@ -141,7 +141,7 @@ CHARACTERS = {
         "bill_type": "wechat",
         "theme_color": ["#2aad67", "#20c06d"],
         # 人物照片URL
-        "photo_url": "https://t7.baidu.com/it/u=0987654321,0987654321&fm=193&f=GIF",
+        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
         "items": [
             {"id": "sticker", "name_zh": "微信表情包", "name_en": "Sticker Pack", "price": 1, "icon": "🌝"},
             {"id": "music", "name_zh": "QQ音乐绿钻", "name_en": "Music VIP", "price": 18, "icon": "🎵"},
@@ -168,7 +168,7 @@ CHARACTERS = {
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
         # 人物照片URL
-        "photo_url": "https://t7.baidu.com/it/u=1122334455,1122334455&fm=193&f=GIF",
+        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
         "items": [
             {"id": "check", "name_zh": "推特蓝标", "name_en": "Blue Check", "price": 8, "icon": "✅"},
             {"id": "starlink_sub", "name_zh": "星链月费", "name_en": "Starlink Sub", "price": 110, "icon": "📡"},
