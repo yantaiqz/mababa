@@ -155,7 +155,7 @@ CHARACTERS = {
         "currency": "$",
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
-        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Elon_Musk_Colorado_2022.jpg/440px-Elon_Musk_Colorado_2022.jpg",
+        "photo_url": "https://media1.tenor.com/m/dPzK1quY_PkAAAAd/elon-musk-smoke.gif",
         "items": [
             {"id": "check", "name_zh": "推特蓝标", "name_en": "Blue Check", "price": 8, "icon": "✅"},
             {"id": "starlink_sub", "name_zh": "星链月费", "name_en": "Starlink Sub", "price": 110, "icon": "📡"},
