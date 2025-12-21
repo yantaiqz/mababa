@@ -562,8 +562,8 @@ with c_btn_col2:
         cny_total = cnt * 10
         usd_total = cnt * 2
         
-        with col_total: 
-            st.markdown(f"""<div style="background:#fff1f2; border-radius:8px; padding:8px; text-align:center; color:#e11d48; font-weight:bold; font-size:1.5rem; height: 100%; display: flex; align-items: center; justify-content: center;">¥{cny_total}</div>""", unsafe_allow_html=True)
+        #with col_total: 
+        #    st.markdown(f"""<div style="background:#fff1f2; border-radius:8px; padding:8px; text-align:center; color:#e11d48; font-weight:bold; font-size:1.5rem; height: 100%; display: flex; align-items: center; justify-content: center;">¥{cny_total}</div>""", unsafe_allow_html=True)
         
         # 统一支付卡片渲染函数
         def render_pay_tab(title, amount_str, color_class, img_path, qr_data_suffix, link_url=None):
