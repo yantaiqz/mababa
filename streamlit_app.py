@@ -103,7 +103,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "alipay",
         "theme_color": ["#1677ff", "#4096ff"],
-        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Jack_Ma_2018.jpg/440px-Jack_Ma_2018.jpg",
+        "photo_url": "https://n.sinaimg.cn/www/crawl/223/w550h473/20230610/d4c0-e5dac2b43c2f0eac7e0056e154161c24.png",
         "items": [
             {"id": "zhacai", "name_zh": "涪陵榨菜", "name_en": "Pickles", "price": 3, "icon": "🥒"},
             {"id": "cola", "name_zh": "肥宅快乐水", "name_en": "Coca Cola", "price": 5, "icon": "🥤"},
