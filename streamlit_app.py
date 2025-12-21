@@ -545,7 +545,7 @@ if total_spent > 0:
         st.success(get_txt('balance_zero'))
 
 # ==========================================
-# 6. 底部咖啡 & 统计 (增加PayPal支付通道)
+# 6. 底部咖啡 & 统计 (PayPal 2美元/杯)
 # ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
@@ -562,8 +562,12 @@ with c_btn_col2:
         st.write("")
         c1, c2 = st.columns([1, 1], gap="small")
         with c1: cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="collapsed")
-        total = cnt * 10
-        with c2: st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
+        
+        # 计算不同支付方式的金额
+        cny_total = cnt * 10  # 微信/支付宝：10元/杯
+        paypal_total = cnt * 2  # PayPal：2美元/杯
+        
+        with c2: st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{cny_total}</div></div>""", unsafe_allow_html=True)
         
         # 增加PayPal支付标签页
         t1, t2, t3 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
@@ -573,16 +577,17 @@ with c_btn_col2:
                 st.image(img_path, use_container_width=True)
             else:
                 if payment_type == "paypal":
-                    # PayPal专属二维码（可以替换为实际的PayPal收款链接）
-                    paypal_link = f"https://paypal.me/yourpaypalid?amount={total/7}"  # 转换为美元示例
+                    # PayPal专属二维码：2美元/杯
+                    paypal_link = f"https://paypal.me/yourpaypalid?amount={paypal_total}"
                     st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={paypal_link}", width=140)
                     st.markdown(f"""
                         <div style="text-align:center; margin-top:10px; font-size:0.85rem; color:#666;">
-                            或直接转账至: yourpaypal@example.com (${total/7:.2f})
+                            或直接转账至: yourpaypal@example.com (${paypal_total:.2f})
                         </div>
                     """, unsafe_allow_html=True)
                 else:
-                    st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}", width=140)
+                    # 微信/支付宝：10元/杯
+                    st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{cny_total}", width=140)
         
         with t1: show_qr("wechat_pay.jpg", "wechat")
         with t2: show_qr("ali_pay.jpg", "alipay")
