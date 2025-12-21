@@ -4,7 +4,8 @@ import uuid
 import datetime
 import os
 import time
-import streamlit.components.v1 as components
+import json
+import re
 
 # ==========================================
 # 1. 基础配置
@@ -17,30 +18,29 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. 自动语言检测逻辑
+# 2. 自动检测浏览器语言
 # ==========================================
-# 检查 URL 参数是否有 lang，如果没有，则注入 JS 检测浏览器语言并刷新
-if "lang_checked" not in st.session_state:
-    qp = st.query_params
-    if "lang" not in qp:
-        # JS 代码：检测浏览器语言，如果是中文环境跳转 ?lang=zh，否则 ?lang=en
-        js_code = """
-        <script>
-            var lang = navigator.language || navigator.userLanguage;
-            var target = lang.toLowerCase().includes('zh') ? 'zh' : 'en';
-            var url = new URL(window.location.href);
-            url.searchParams.set('lang', target);
-            window.location.href = url.toString();
-        </script>
-        """
-        components.html(js_code, height=0, width=0)
-        st.stop() # 停止后续渲染等待刷新
-    else:
-        st.session_state.lang = qp["lang"]
-        st.session_state.lang_checked = True
-elif "lang" in st.query_params:
-    # 如果 URL 参数变了（用户手动改了 URL），同步到 session
-    st.session_state.lang = st.query_params["lang"]
+def detect_browser_language():
+    """自动检测浏览器语言，优先使用中文，否则英文"""
+    try:
+        # 获取请求头中的语言信息
+        headers = st.context.headers
+        accept_language = headers.get('Accept-Language', 'zh')
+        
+        # 解析语言代码
+        lang_codes = re.findall(r'([a-z]{2})(?:-[A-Z]{2})?', accept_language.lower())
+        if 'zh' in lang_codes:
+            return 'zh'
+        elif 'en' in lang_codes:
+            return 'en'
+        else:
+            return 'zh'  # 默认中文
+    except:
+        return 'zh'
+
+# 初始化语言设置（优先使用已保存的，否则自动检测）
+if 'lang' not in st.session_state:
+    st.session_state.lang = detect_browser_language()
 
 # ==========================================
 # 3. 数据配置
@@ -58,7 +58,7 @@ LANG_TEXT = {
         "coffee_desc": "如果这个小游戏让你摸鱼更快乐，欢迎投喂！",
         "pay_wechat": "微信支付",
         "pay_alipay": "支付宝",
-        "pay_paypal": "PayPal", # 新增
+        "pay_paypal": "PayPal",
         "more_label": "✨ 更多乐子",
         "unit_cn": "杯",
         "unit_total": "总计投入",
@@ -70,7 +70,9 @@ LANG_TEXT = {
         "share_prompt": "复制下方文案，配合截图发朋友圈👇",
         "share_copy_text": "我在《花光大佬的钱》里挥霍了 {amount}！买了 {item_count} 件离谱商品，你也来试试？👉 https://mababa.streamlit.app",
         "scan_to_play": "长按识别二维码挑战",
-        "pv_today": "今日 PV"
+        "pv_today": "今日 PV",
+        "pay_choose": "选择支付方式",
+        "coffee_amount": "请输入打赏金额"
     },
     "en": {
         "title": "Spend {name}'s Money",
@@ -83,9 +85,9 @@ LANG_TEXT = {
         "coffee_title": " ",
         "coffee_desc": "If you enjoyed this, consider buying me a coffee!",
         "pay_wechat": "WeChat Pay",
-        "pay_alipay": "Alipay",
-        "pay_paypal": "PayPal", # 新增
         "more_label": "✨ More fun",
+        "pay_alipay": "Alipay",
+        "pay_paypal": "PayPal",
         "unit_cn": "Cups",
         "unit_total": "Total",
         "pay_success": "Received! Thanks for the coffee! ❤️",
@@ -96,7 +98,9 @@ LANG_TEXT = {
         "share_prompt": "Copy text below & share with screenshot👇",
         "share_copy_text": "I spent {amount} in 'Spend Billions'! Bought {item_count} items. Can you beat me? 👉 https://mababa.streamlit.app",
         "scan_to_play": "Scan to Play",
-        "pv_today": "Today PV"
+        "pv_today": "Today PV",
+        "pay_choose": "Choose Payment Method",
+        "coffee_amount": "Enter Donation Amount"
     }
 }
 
@@ -181,11 +185,11 @@ CHARACTERS = {
 # ==========================================
 # 4. 状态与工具
 # ==========================================
-if 'lang' not in st.session_state: st.session_state.lang = 'zh'
 if 'char_key' not in st.session_state: st.session_state.char_key = 'jack'
 if 'cart' not in st.session_state: st.session_state.cart = {}
 if 'visitor_id' not in st.session_state: st.session_state["visitor_id"] = str(uuid.uuid4())
 if 'coffee_num' not in st.session_state: st.session_state.coffee_num = 1
+if 'payment_method' not in st.session_state: st.session_state.payment_method = 'wechat'
 
 def get_txt(key): return LANG_TEXT[st.session_state.lang][key]
 def get_char(): return CHARACTERS[st.session_state.char_key]
@@ -222,7 +226,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 5. CSS (移动端适配与美化)
+# 5. CSS (移动端优化 + 视觉深度优化)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -231,36 +235,108 @@ st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
     
-    .stApp {{ background-color: #f3f4f6; font-family: 'Inter', sans-serif; }}
-    
-    /* 核心布局 */
-    .block-container {{
-        max-width: 900px !important;
-        padding: 1rem 1rem 3rem 1rem !important;
+    /* 全局重置 */
+    .stApp {{ 
+        background-color: #f3f4f6; 
+        font-family: 'Inter', sans-serif;
     }}
     
+    /* 响应式布局 - 移动端适配 */
+    @media (max-width: 768px) {{
+        .block-container {{
+            max-width: 100% !important;
+            padding-top: 0.5rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }}
+        
+        /* 移动端商品网格改为2列 */
+        .item-grid {{
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+        }}
+        
+        /* 移动端标题字体缩小 */
+        .header-container {{
+            font-size: 1.8rem !important;
+            padding: 8px 0 !important;
+        }}
+        
+        /* 移动端人物按钮调整 */
+        .char-buttons-container {{
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }}
+        
+        /* 移动端统计条调整 */
+        .stats-bar {{
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 15px !important;
+            width: 100% !important;
+        }}
+        
+        .stats-bar > div {{
+            border-left: none !important;
+            padding-left: 0 !important;
+            padding-top: 10px !important;
+            border-top: 1px solid #eee !important;
+        }}
+        
+        .stats-bar > div:first-child {{
+            border-top: none !important;
+            padding-top: 0 !important;
+        }}
+    }}
+    
+    /* 桌面端样式 */
+    @media (min-width: 769px) {{
+        .block-container {{
+            max-width: 900px !important;
+            padding-top: 1rem !important;
+            padding-bottom: 3rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }}
+        
+        .item-grid {{
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 15px !important;
+        }}
+    }}
+    
+    /* 隐藏 Streamlit 默认组件 */
     #MainMenu, footer, header {{visibility: hidden;}}
     
-    /* 粘性头部 */
+    /* 磨砂玻璃粘性头部 (Glassmorphism Sticky Header) */
     .header-container {{
         position: sticky; top: 0; z-index: 999;
         background: linear-gradient(180deg, {theme_colors[0]}ee, {theme_colors[1]}dd);
         backdrop-filter: blur(12px);
-        color: white; padding: 12px 0; text-align: center;
-        font-weight: 800; font-size: 2.2rem;
+        color: white; 
+        padding: 12px 0; 
+        text-align: center;
+        font-weight: 800; 
+        font-size: 2.2rem;
         font-family: 'JetBrains Mono', monospace;
         box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-        margin-bottom: 25px; margin-left: -1rem; margin-right: -1rem;
+        margin-bottom: 25px;
+        margin-left: -1rem; margin-right: -1rem;
         border-radius: 0 0 20px 20px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }}
     
-    /* 商品卡片 */
+    /* 商品卡片优化 */
     [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] {{
-        background-color: white; border-radius: 16px;
+        background-color: white;
+        border-radius: 16px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         border: 1px solid rgba(229, 231, 235, 0.5);
+        height: 100%;
     }}
     [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"]:hover {{
         transform: translateY(-5px);
@@ -268,20 +344,24 @@ st.markdown(f"""
         border-color: {theme_colors[0]};
     }}
     
-    /* Emoji 按钮 */
+    /* Emoji 按钮优化 */
     button[kind="tertiary"] {{
-        background-color: transparent !important; border: none !important;
-        box-shadow: none !important; padding: 0 !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
         transition: transform 0.1s !important;
     }}
     button[kind="tertiary"]:hover {{ transform: scale(1.1) !important; }}
     button[kind="tertiary"]:active {{ transform: scale(0.9) !important; }}
     button[kind="tertiary"] p {{
-        font-size: 4rem !important; margin: 0 !important;
-        padding-top: 5px !important; text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        font-size: 3rem !important; 
+        margin: 0 !important;
+        padding-top: 5px !important;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }}
     
-    /* 文本与数字 */
+    /* 文本与数字优化 */
     .item-name {{ 
         font-size: 1rem; font-weight: 700; color: #1f2937; 
         height: 36px; display: flex; align-items: center; justify-content: center; 
@@ -291,36 +371,47 @@ st.markdown(f"""
         color: {theme_colors[1]}; font-weight: 600; font-size: 0.9rem; 
         text-align: center; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;
     }}
+    
+    /* 操作按钮美化 */
     button[kind="secondary"], button[kind="primary"] {{ 
         min-height: 36px; border-radius: 10px; font-weight: 700; border: none;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }}
+    
+    /* 数量显示框 */
     .count-display {{
-        text-align: center; line-height: 36px; font-weight: 800; color: #374151;
-        font-size: 1.1rem; background: #f9fafb; border-radius: 10px; 
+        text-align: center; line-height: 36px; 
+        font-weight: 800; color: #374151; font-size: 1.1rem;
+        background: #f9fafb; border-radius: 10px; 
         border: 1px solid #e5e7eb; font-family: 'JetBrains Mono', monospace;
     }}
 
-    /* 账单样式 */
+    /* 账单拟物化 */
     .bill-container {{ 
         background: white; margin: 30px auto; max-width: 420px; 
         box-shadow: 0 15px 40px rgba(0,0,0,0.12); border-radius: 6px; overflow: hidden; 
         position: relative;
     }}
+    /* 锯齿边缘效果 */
     .bill-container::after {{
         content: ""; position: absolute; bottom: -5px; left: 0; right: 0; height: 10px;
         background: radial-gradient(circle, transparent 70%, white 75%) 0 0 / 10px 10px repeat-x;
         transform: rotate(180deg);
     }}
+    
     .bill-footer {{ background: #fafafa; padding: 25px; text-align: center; border-top: 2px dashed #eee; }}
     
+    /* 账单样式 */
     .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
     .bill-wechat-total {{ font-size: 1.8rem; font-weight: 800; text-align: center; margin: 15px 0; color: #111; font-family: 'JetBrains Mono'; }}
+    
     .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
     .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.8rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
+    
     .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
     .bill-paypal-total {{ font-size: 1.8rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
     
+    /* 统计条 */
     .stats-bar {{
         display: flex; justify-content: center; gap: 25px; margin-top: 40px; 
         padding: 15px 25px; background-color: white; border-radius: 50px; 
@@ -328,46 +419,61 @@ st.markdown(f"""
         width: fit-content; margin-left: auto; margin-right: auto; 
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }}
-    .neal-btn {{
-        width: 100%; padding: 0.5rem 0; background-color: white;
-        border: 1px solid #e5e7eb; border-radius: 0.75rem; color: #333;
-        font-size: 0.9rem; cursor: pointer; transition: all 0.15s ease; font-weight: 600;
-    }}
-    .neal-btn:hover {{ background-color: #f9fafb; border-color: #d1d5db; transform: translateY(-1px); }}
-    .neal-btn-link {{ text-decoration: none; }}
-    .char-buttons-container {{ display: flex; justify-content: center; gap: 15px; margin: 10px 0 20px 0; }}
-    .top-actions-bar {{ display: flex; justify-content: flex-end; gap: 10px; margin: 10px 0 5px 0; }}
 
-    /* ==========================================================
-       移动端深度适配优化 (Max Width 768px)
-       ========================================================== */
-    @media (max-width: 768px) {{
-        /* 1. 布局调整：缩小 Padding */
-        .block-container {{ padding-left: 0.5rem !important; padding-right: 0.5rem !important; }}
-        
-        /* 2. 标题字号缩小 */
-        h1 {{ font-size: 2rem !important; }}
-        .header-container {{ font-size: 1.6rem !important; padding: 8px 0 !important; }}
-        
-        /* 3. 强制 st.columns 换行 (Flex Wrap)
-           解释：Streamlit 默认列宽是固定的，这行代码强制它们在小屏幕允许换行
-           min-width 设为 45% 意味着一行可以放两个，或者太挤时放一个
-        */
-        [data-testid="stHorizontalBlock"] {{
-            flex-wrap: wrap !important;
-            gap: 1rem !important;
-        }}
-        [data-testid="column"] {{
-            min-width: 140px !important;
-            flex: 1 1 calc(50% - 1rem) !important; /* 强制两列布局 */
-        }}
-        
-        /* 4. 商品卡片微调 */
-        .item-name {{ font-size: 0.9rem !important; height: 32px !important; }}
-        button[kind="tertiary"] p {{ font-size: 3rem !important; }}
-        
-        /* 5. 底部按钮列变为堆叠 */
-        .bill-container {{ margin: 10px; }}
+    /* 右上角按钮样式 */
+    .neal-btn {{
+        width: 100%;
+        padding: 0.5rem 0;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        color: #333;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-weight: 600;
+    }}
+    .neal-btn:hover {{
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        transform: translateY(-1px);
+    }}
+    .neal-btn-link {{
+        text-decoration: none;
+    }}
+
+    /* 人物按钮容器样式 */
+    .char-buttons-container {{
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 10px 0 20px 0;
+        flex-wrap: nowrap;
+    }}
+
+    /* 顶部操作栏样式 */
+    .top-actions-bar {{
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin: 10px 0 5px 0;
+    }}
+    
+    /* 支付方式选择器 */
+    .payment-tabs {{
+        margin: 15px 0;
+    }}
+    
+    /* 移动端适配的QR码 */
+    .qr-code {{
+        max-width: 120px;
+        height: auto;
+        margin: 0 auto;
+    }}
+    
+    /* 平滑滚动 */
+    html {{
+        scroll-behavior: smooth;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -376,70 +482,113 @@ st.markdown(f"""
 # 6. 主页面逻辑
 # ==========================================
 
-# 顶部操作栏
+# A. 第一层：语言切换 + more fun (右对齐)
 st.markdown('<div class="top-actions-bar">', unsafe_allow_html=True)
 col_lang, col_more = st.columns([1, 1.2], gap="small")
+
 with col_lang:
-    # 切换语言同时更新 URL 参数
-    btn_txt = "🌐 " + ("EN" if st.session_state.lang == 'zh' else "中")
-    if st.button(btn_txt, key="btn_lang", use_container_width=True, type="secondary"):
-        new_lang = 'en' if st.session_state.lang == 'zh' else 'zh'
-        st.query_params["lang"] = new_lang
-        st.session_state.lang = new_lang
+    # 语言切换按钮
+    if st.button("🌐 " + ("EN" if st.session_state.lang == 'zh' else "中"), 
+                key="btn_lang", 
+                use_container_width=True,
+                type="secondary"):
+        st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
 
 with col_more:
-    st.markdown(f"""<a href="#" target="_blank" class="neal-btn-link"><button class="neal-btn">{get_txt('more_label')}</button></a>""", unsafe_allow_html=True)
+    # More Fun按钮
+    st.markdown(f"""
+        <a href="https://laodeng.streamlit.app/" target="_blank" class="neal-btn-link">
+            <button class="neal-btn">{get_txt('more_label')}</button>
+        </a>
+    """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 人物切换
+# B. 第二层：三个人物切换按钮 (居中)
 st.markdown('<div class="char-buttons-container">', unsafe_allow_html=True)
 char_cols = st.columns(3, gap="medium")
 chars_list = list(CHARACTERS.items())
-for i, (key, data) in enumerate(chars_list):
-    with char_cols[i]:
-        label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-        if st.button(label, key=f"btn_char_{key}", use_container_width=True):
-            switch_char(key)
-            st.rerun()
+
+with char_cols[0]:
+    key, data = chars_list[0]
+    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
+        switch_char(key)
+        st.rerun()
+
+with char_cols[1]:
+    key, data = chars_list[1]
+    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
+        switch_char(key)
+        st.rerun()
+
+with char_cols[2]:
+    key, data = chars_list[2]
+    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
+    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
+        switch_char(key)
+        st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 标题与余额
+# C. 标题与余额
 balance, total_spent = calculate_balance()
 c_key = st.session_state.char_key
 currency = current_char['currency']
 char_name = current_char['name_zh'] if st.session_state.lang == 'zh' else current_char['name_en']
 
 st.markdown(f"<br>", unsafe_allow_html=True)
-st.markdown(f"<h1 style='text-align: center; margin-bottom: 0.2rem; letter-spacing: -1px;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align: center; font-size: clamp(1.8rem, 5vw, 2.8rem); margin-bottom: 0.2rem; letter-spacing: -1px;'>{get_txt('title').format(name=char_name)}</h1>", unsafe_allow_html=True)
 money_str = f"{currency}{current_char['money']:,}"
 st.markdown(f"<div style='text-align: center; color: #6b7280; font-weight: 500; margin-bottom: 20px;'>{get_txt('subtitle').format(money=money_str)}</div>", unsafe_allow_html=True)
+
+# 粘性余额条
 st.markdown(f"""<div class="header-container">{currency} {balance:,.0f}</div>""", unsafe_allow_html=True)
 
-# 商品展示
+# D. 商品网格 (响应式布局)
 items = current_char['items']
-cols_per_row = 3
-# 使用 Python 切片配合 CSS 自动换行
+st.markdown('<div class="item-grid">', unsafe_allow_html=True)
+
+# 动态计算每行列数（移动端2列，桌面端3列）
+cols_per_row = 2 if st.session_state.get('is_mobile', False) or st.query_params.get('mobile') else 3
+
+# 渲染商品网格
 for i in range(0, len(items), cols_per_row):
     cols = st.columns(cols_per_row, gap="medium")
     for j in range(cols_per_row):
         if i + j < len(items):
             item = items[i + j]
             item_name = item['name_zh'] if st.session_state.lang == 'zh' else item['name_en']
+            
             with cols[j]:
                 with st.container(border=True): 
+                    # Emoji 按钮
                     if st.button(item['icon'], key=f"emoji_{c_key}_{item['id']}", use_container_width=True, type="tertiary"):
                         click_item_add(item['id'], item['price'], balance)
-                    st.markdown(f"""<div class="item-name">{item_name}</div><div class="item-price">{currency} {item['price']:,}</div>""", unsafe_allow_html=True)
+                    
+                    # 信息区
+                    st.markdown(f"""
+                        <div class="item-name">{item_name}</div>
+                        <div class="item-price">{currency} {item['price']:,}</div>
+                    """, unsafe_allow_html=True)
+                    
+                    # 底部操作区
                     b1, b2, b3 = st.columns([1, 1.2, 1], gap="small")
-                    with b1: st.button("－", key=f"dec_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], -1, item['price'], balance), use_container_width=True)
-                    with b2: st.markdown(f'<div class="count-display">{st.session_state.cart[c_key].get(item["id"], 0)}</div>', unsafe_allow_html=True)
-                    with b3: st.button("＋", key=f"inc_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], 1, item['price'], balance), type="primary", use_container_width=True)
+                    with b1: 
+                        st.button("－", key=f"dec_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], -1, item['price'], balance), use_container_width=True)
+                    with b2:
+                        cnt = st.session_state.cart[c_key].get(item['id'], 0)
+                        st.markdown(f'<div class="count-display">{cnt}</div>', unsafe_allow_html=True)
+                    with b3: 
+                        st.button("＋", key=f"inc_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], 1, item['price'], balance), type="primary", use_container_width=True)
 
-# 账单生成
+st.markdown('</div>', unsafe_allow_html=True)
+
+# E. 账单与分享功能
 if total_spent > 0:
     st.markdown("<br><br>", unsafe_allow_html=True)
     bill_type = current_char['bill_type']
+    
     purchased_items = []
     item_count_total = 0
     for item in items:
@@ -451,23 +600,23 @@ if total_spent > 0:
 
     qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://mababa.streamlit.app"
     
-    # 账单 HTML 生成
+    # 账单 HTML
     bill_html = ""
-    # ... (微信和支付宝逻辑保持不变，为节省篇幅略过，下方主要展示PayPal) ...
     if bill_type == 'wechat':
-        # ... (WeChat HTML logic) ...
-         bill_html = f"""
+        bill_html = f"""
         <div class="bill-container bill-wechat">
             <div class="bill-wechat-header"><span>{get_txt('pay_wechat')}</span></div>
             <div class="bill-wechat-total">{currency}{total_spent:,.0f}</div>
             <div style="text-align: center; color: #666; margin-bottom: 20px;">{get_txt('total_spent')}</div>
-            <div style="padding: 0 25px;"><hr style="border-top: 1px solid #eee; margin: 10px 0;"><div style="max-height: 400px; overflow-y: auto;">
+            <div style="padding: 0 25px;"><hr style="border-top: 1px solid #eee; margin: 10px 0;">
+                <div style="max-height: 400px; overflow-y: auto;">
         """
-         for name, cnt, cost in purchased_items:
-             bill_html += f"""<div style="display: flex; justify-content: space-between; margin: 12px 0; font-size: 0.95rem; color: #333;"><span>{name} x{cnt}</span><span style="font-weight: bold;">{currency}{cost:,.0f}</span></div>"""
-         bill_html += f"""</div></div><div class="bill-footer"><div style="color: #999; font-size: 0.85rem; margin-bottom: 8px;">{get_txt('scan_to_play')}</div><img src="{qr_url}" style="width: 100px; height: 100px; mix-blend-mode: multiply;"></div></div>"""
+        for name, cnt, cost in purchased_items:
+            bill_html += f"""<div style="display: flex; justify-content: space-between; margin: 12px 0; font-size: 0.95rem; color: #333;"><span>{name} x{cnt}</span><span style="font-weight: bold;">{currency}{cost:,.0f}</span></div>"""
+        bill_html += f"""</div></div>
+            <div class="bill-footer"><div style="color: #999; font-size: 0.85rem; margin-bottom: 8px;">{get_txt('scan_to_play')}</div><img src="{qr_url}" class="qr-code"></div>
+        </div>"""
     elif bill_type == 'alipay':
-        # ... (Alipay HTML logic) ...
         bill_html = f"""
         <div class="bill-container bill-alipay">
             <div class="bill-alipay-header"><span>{'<'}</span><span>{get_txt('receipt_title')}</span><span>...</span></div>
@@ -477,7 +626,7 @@ if total_spent > 0:
             bill_html += f"""<div style="display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.95rem;"><span style="color: #333;">{name} x{cnt}</span><span style="font-weight: bold; color: #333;">-{currency}{cost:,.0f}</span></div>"""
         bill_html += f"""</div>
             <div class="bill-alipay-total">{get_txt('total_spent')}: <span style="font-size: 1.6rem; color: #1677ff;">{currency}{total_spent:,.0f}</span></div>
-            <div class="bill-footer"><div style="display: flex; align-items: center; justify-content: center; gap: 15px;"><img src="{qr_url}" style="width: 80px; height: 80px;"><div style="text-align: left; font-size: 0.85rem; color: #999;"><div>{get_txt('scan_to_play')}</div><div style="color: #1677ff; font-weight:bold;">PK Billionaires</div></div></div></div>
+            <div class="bill-footer"><div style="display: flex; align-items: center; justify-content: center; gap: 15px;"><img src="{qr_url}" class="qr-code"><div style="text-align: left; font-size: 0.85rem; color: #999;"><div>{get_txt('scan_to_play')}</div><div style="color: #1677ff; font-weight:bold;">PK Billionaires</div></div></div></div>
         </div>"""
     else: # PayPal
         bill_html = f"""
@@ -489,17 +638,26 @@ if total_spent > 0:
         for name, cnt, cost in purchased_items:
             bill_html += f"""<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem;"><span>{name} ({cnt})</span><span>{currency}{cost:,.0f}</span></div>"""
         bill_html += f"""</div>
-            <div class="bill-footer" style="margin-top: 30px;"><img src="{qr_url}" style="width: 80px; height: 80px;"><div style="font-size: 0.8rem; color: #aaa; margin-top: 8px;">Scan to challenge Elon</div></div>
+            <div class="bill-footer" style="margin-top: 30px;"><img src="{qr_url}" class="qr-code"><div style="font-size: 0.8rem; color: #aaa; margin-top: 8px;">Scan to challenge Elon</div></div>
         </div>"""
 
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.markdown(bill_html, unsafe_allow_html=True)
+        
+        # 分享弹窗
+        st.write("")
         @st.dialog(get_txt("share_modal_title"), width="large")
         def show_share_modal(html, amount, count):
             st.markdown(html, unsafe_allow_html=True)
             share_text = get_txt('share_copy_text').format(amount=amount, item_count=count)
-            st.markdown(f"""<div style="margin-top: 25px; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: center; border:1px solid #e2e8f0;"><div style="font-weight: 700; color: #333; margin-bottom: 10px;">{get_txt('share_prompt')}</div><code style="display: block; padding: 12px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #475569; word-break: break-all; font-family: 'JetBrains Mono', monospace;">{share_text}</code></div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div style="margin-top: 25px; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: center; border:1px solid #e2e8f0;">
+                    <div style="font-weight: 700; color: #333; margin-bottom: 10px;">{get_txt('share_prompt')}</div>
+                    <code style="display: block; padding: 12px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #475569; word-break: break-all; font-family: 'JetBrains Mono', monospace;">{share_text}</code>
+                </div>
+            """, unsafe_allow_html=True)
+
         if st.button(get_txt("share_btn"), type="primary", use_container_width=True):
             show_share_modal(bill_html, f"{currency}{total_spent:,.0f}", item_count_total)
 
@@ -508,7 +666,7 @@ if total_spent > 0:
         st.success(get_txt('balance_zero'))
 
 # ==========================================
-# 7. 底部咖啡 & PayPal & 统计
+# 7. 底部咖啡 & 统计 (新增PayPal支付)
 # ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
@@ -523,36 +681,62 @@ with c_btn_col2:
             with cols[i]:
                 if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): set_val(num)
         st.write("")
-        c1, c2 = st.columns([1, 1], gap="small")
-        with c1: cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="collapsed")
+        
+        # 金额输入
+        col_amount, col_total = st.columns([1, 1], gap="small")
+        with col_amount: 
+            cnt = st.number_input(get_txt('coffee_amount'), 1, 100, step=1, key='coffee_num', label_visibility="visible")
         total = cnt * 10
-        with c2: st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
+        with col_total: 
+            st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center; height:100%; display:flex; align-items:center; justify-content:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
         
-        # 增加 PayPal Tab
-        t1, t2, t3 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
+        # 支付方式选择（新增PayPal）
+        st.markdown(f"<div style='text-align:center; font-weight:bold; margin:15px 0;'>{get_txt('pay_choose')}</div>", unsafe_allow_html=True)
+        payment_tabs = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
         
-        def show_qr(img_path):
-            if os.path.exists(img_path): st.image(img_path, use_container_width=True)
-            else: st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}", width=140)
+        def show_qr(img_path, alt_text):
+            if os.path.exists(img_path): 
+                st.image(img_path, use_container_width=True)
+            else: 
+                # 生成对应支付方式的二维码
+                qr_data = f"Donate_{total}_{alt_text}"
+                st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={qr_data}", width=180)
         
-        with t1: show_qr("wechat_pay.jpg")
-        with t2: show_qr("ali_pay.jpg")
-        with t3: 
-            # PayPal 特有显示，可以用链接按钮或二维码
-            st.markdown(f"""<div style="text-align: center; padding: 20px;"><a href="https://www.paypal.me/YOUR_ID/{total}" target="_blank" style="text-decoration:none;"><button style="background:#003087; color:white; padding:10px 20px; border-radius:20px; border:none; font-weight:bold; cursor:pointer;">Pay via PayPal</button></a><br><br><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https://www.paypal.me/YOUR_ID/{total}" width="140"></div>""", unsafe_allow_html=True)
-
+        with payment_tabs[0]: 
+            show_qr("wechat_pay.jpg", "WeChat")
+        with payment_tabs[1]: 
+            show_qr("ali_pay.jpg", "Alipay")
+        with payment_tabs[2]: 
+            # PayPal支付展示
+            st.markdown("""
+                <div style="background:#003087; color:white; padding:15px; border-radius:8px; text-align:center; margin-bottom:15px;">
+                    <div style="font-size:1.2rem; font-weight:bold; font-style:italic;">PayPal</div>
+                </div>
+            """, unsafe_allow_html=True)
+            # 这里替换为你的PayPal收款链接
+            paypal_link = "https://paypal.me/yourpaypalid"
+            st.markdown(f"""
+                <a href="{paypal_link}" target="_blank" style="display:block; text-align:center; margin:10px 0;">
+                    <button style="background:#009cde; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
+                        🛒 Pay with PayPal (${total/7:.2f})
+                    </button>
+                </a>
+            """, unsafe_allow_html=True)
+            st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={paypal_link}", width=180)
+        
         st.write("")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
             st.balloons()
-            st.success(get_txt('pay_success'))
+            st.success(get_txt('pay_success').format(count=cnt))
             time.sleep(2)
             st.rerun()
 
     if st.button(get_txt('coffee_btn'), use_container_width=True):
         show_coffee_window()
 
-# 简易统计
-DB_FILE = os.path.join(os.path.expanduser("~"), "visit_stats.db")
+# 数据库统计
+DB_DIR = os.path.expanduser("~/")
+DB_FILE = os.path.join(DB_DIR, "visit_stats.db")
 def track_stats():
     try:
         conn = sqlite3.connect(DB_FILE, check_same_thread=False)
@@ -569,14 +753,23 @@ def track_stats():
             st.session_state["has_counted"] = True
         t_uv = c.execute("SELECT COUNT(*) FROM visitors WHERE last_visit_date=?", (today,)).fetchone()[0]
         a_uv = c.execute("SELECT COUNT(*) FROM visitors").fetchone()[0]
+        t_pv = c.execute("SELECT pv_count FROM daily_traffic WHERE date=?", (today,)).fetchone()[0]
         conn.close()
-        return t_uv, a_uv
-    except: return 0, 0
+        return t_uv, a_uv, t_pv
+    except: return 0, 0, 0
 
-today_uv, total_uv = track_stats()
+today_uv, total_uv, today_pv = track_stats()
 st.markdown(f"""
 <div class="stats-bar">
     <div style="text-align: center;"><div>{get_txt('visitor_today')}</div><div style="font-weight:700; color:#111;">{today_uv}</div></div>
     <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('visitor_total')}</div><div style="font-weight:700; color:#111;">{total_uv}</div></div>
 </div><br><br>
 """, unsafe_allow_html=True)
+
+# 移动端检测
+try:
+    user_agent = st.context.headers.get('User-Agent', '')
+    if any(mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']):
+        st.session_state.is_mobile = True
+except:
+    st.session_state.is_mobile = False
