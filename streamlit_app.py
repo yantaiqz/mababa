@@ -226,7 +226,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 5. CSS (重点优化人物选择区域)
+# 5. CSS (修复兼容问题)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -469,7 +469,7 @@ st.markdown(f"""
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 30px; /* 增加间距，提升呼吸感 */
+        gap: 30px;
         padding: 0 20px;
         margin: 15px 0 35px 0;
         flex-wrap: wrap;
@@ -560,8 +560,8 @@ st.markdown(f"""
         background-color: {theme_colors[1]}10;
     }}
     
-    /* 隐藏的选择按钮 */
-    .char-select-btn {{
+    /* 隐藏人物选择按钮 - 兼容所有Streamlit版本 */
+    [data-testid="baseButton-secondary"][key^="char_btn_"] {{
         display: none !important;
     }}
     
@@ -602,7 +602,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 6. 主页面逻辑 (优化人物选择区域)
+# 6. 主页面逻辑 (修复按钮错误)
 # ==========================================
 
 # A. 第一层：语言切换 + more fun (右对齐)
@@ -627,40 +627,44 @@ with col_more:
     """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# B. 第二层：人物选择区域 (核心优化)
+# B. 第二层：人物选择区域 (修复核心错误)
 st.markdown('<div class="char-select-container">', unsafe_allow_html=True)
 chars_list = list(CHARACTERS.items())
 
-# 遍历创建人物卡片
-for key, data in chars_list:
-    is_active = st.session_state.char_key == key
-    char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
-    
-    # 创建隐藏的选择按钮（核心交互）
-    btn_clicked = st.button(
-        label="",
-        key=f"char_btn_{key}",
-        use_container_width=True,
-        class_="char-select-btn"
-    )
-    
-    if btn_clicked:
-        switch_char(key)
-        st.rerun()
-    
-    # 人物卡片HTML（纯静态，无内联事件）
-    card_class = "char-card" + (" active" if is_active else "")
-    photo_class = "char-photo" + (" active" if is_active else "")
-    
-    st.markdown(f"""
-    <div class="{card_class}">
-        <div class="char-photo-wrapper">
-            <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}"
-                 onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
+# 先创建所有隐藏按钮（放在单独的容器中）
+hidden_buttons_col = st.columns(len(chars_list), gap="medium")[0]
+with hidden_buttons_col:
+    for key, data in chars_list:
+        # 修复1：按钮必须有非空标签，通过CSS隐藏而非空标签
+        # 修复2：移除不兼容的class_参数，改用data-testid选择器隐藏
+        if st.button(
+            label=f"Select {key}",  # 非空标签
+            key=f"char_btn_{key}",
+            use_container_width=True
+        ):
+            switch_char(key)
+            st.rerun()
+
+# 渲染人物卡片
+char_cols = st.columns(len(chars_list), gap="medium")
+for idx, (key, data) in enumerate(chars_list):
+    with char_cols[idx]:
+        is_active = st.session_state.char_key == key
+        char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
+        
+        # 人物卡片HTML（纯静态，无内联事件）
+        card_class = "char-card" + (" active" if is_active else "")
+        photo_class = "char-photo" + (" active" if is_active else "")
+        
+        st.markdown(f"""
+        <div class="{card_class}">
+            <div class="char-photo-wrapper">
+                <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}"
+                     onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
+            </div>
+            <div class="char-name">{char_name}</div>
         </div>
-        <div class="char-name">{char_name}</div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -873,8 +877,8 @@ with c_btn_col2:
     if st.button(get_txt('coffee_btn'), use_container_width=True):
         show_coffee_window()
 
-# 数据库统计
-DB_DIR = os.path.expanduser("~/")
+# 数据库统计 - 兼容Streamlit Cloud路径
+DB_DIR = "./"  # 修改为当前目录，兼容Cloud环境
 DB_FILE = os.path.join(DB_DIR, "visit_stats.db")
 def track_stats():
     try:
@@ -895,7 +899,10 @@ def track_stats():
         t_pv = c.execute("SELECT pv_count FROM daily_traffic WHERE date=?", (today,)).fetchone()[0]
         conn.close()
         return t_uv, a_uv, t_pv
-    except: return 0, 0, 0
+    except Exception as e:
+        # 捕获异常，避免数据库错误导致应用崩溃
+        st.error(f"统计功能临时异常: {str(e)}")
+        return 0, 0, 0
 
 today_uv, total_uv, today_pv = track_stats()
 st.markdown(f"""
