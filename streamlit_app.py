@@ -273,15 +273,7 @@ st.markdown(f"""
         background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         border: 1px solid rgba(229, 231, 235, 0.5);
     }}
-    
   
-    .stats-bar {{ display: flex; justify-content: center; gap: 25px; margin: 40px auto; padding: 15px 25px; background: white; border-radius: 50px; border: 1px solid #eee; width: fit-content; }}
-    .neal-btn {{ width: 100%; padding: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-weight: 600; cursor: pointer; }}
-    .neal-btn-link {{ text-decoration: none; color: #333; }}
-
-
-
-    
     /* 4. Emoji 按钮 (完全透明 + 点击反馈) */
     button[kind="tertiary"] {{
         background-color: transparent !important;
@@ -359,6 +351,27 @@ st.markdown(f"""
     }}
 
 
+    /* 8. 右上角按钮样式 */
+    .neal-btn {{
+        width: 100%;
+        padding: 0.5rem 0;
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        color: #333;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-weight: 600;
+    }}
+    .neal-btn:hover {{
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        transform: translateY(-1px);
+    }}
+    .neal-btn-link {{
+        text-decoration: none;
+    }}
 
 </style>
 """, unsafe_allow_html=True)
