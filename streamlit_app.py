@@ -720,7 +720,7 @@ with c_btn_col2:
                 </div>
             """.format(cnt=cnt, usd_total=usd_total), unsafe_allow_html=True)
             # 这里替换为你的PayPal收款链接
-            paypal_link = "https://paypal.me/yourpaypalid"
+            paypal_link = "https://paypal.me/ytqz"
             st.markdown(f"""
                 <a href="{paypal_link}" target="_blank" style="display:block; text-align:center; margin:10px 0;">
                     <button style="background:#009cde; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
@@ -728,7 +728,8 @@ with c_btn_col2:
                     </button>
                 </a>
             """, unsafe_allow_html=True)
-            st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={paypal_link}", width=180)
+            show_qr("paypal.png", "Paypal")
+            #st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={paypal_link}", width=180)
         
         st.write("")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
