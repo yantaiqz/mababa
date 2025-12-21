@@ -638,12 +638,9 @@ for idx, (key, data) in enumerate(chars_list):
         # 渲染人物卡片
         st.markdown(f"""
 <div class="{card_class}">
-    <!-- 人物照片 -->
     <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}" 
          onclick="document.getElementById('char_btn_{key}').click()"
          onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
-    
-    <!-- 人物名称 -->
     <div class="{name_class}" onclick="document.getElementById('char_btn_{key}').click()">{char_name}</div>
 </div>
         """, unsafe_allow_html=True)
