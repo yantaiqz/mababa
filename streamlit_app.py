@@ -553,115 +553,72 @@ if total_spent > 0:
     if balance == 0:
         st.balloons()
         st.success(get_txt('balance_zero'))
-
+        
 # ==========================================
-# 6. 底部咖啡 & 统计 (核心修改：PayPal金额同步显示)
+# 7. 底部咖啡 & 统计 (修复报错版)
 # ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
 with c_btn_col2:
     @st.dialog(" " + get_txt('coffee_title'), width="small")
     def show_coffee_window():
-        st.markdown(f"""<div style="background:white; border:1px solid #eee; border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-bottom:20px;"><p style="margin:0; color:#555;">{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
-        presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
-        def set_val(n): 
-            st.session_state.coffee_num = n
-            st.rerun()  # 数量变化时重新渲染
+        st.markdown(f"""<div style="text-align:center; color:#666; margin-bottom:15px;">{get_txt('coffee_desc')}</div>""", unsafe_allow_html=True)
         
+        # 快捷按钮
+        presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
+        def set_val(n): st.session_state.coffee_num = n
         cols = st.columns(3, gap="small")
         for i, (icon, num) in enumerate(presets):
             with cols[i]:
-                if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): 
-                    set_val(num)
-        
+                if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): set_val(num)
         st.write("")
-        c1, c2 = st.columns([1, 1], gap="small")
-        with c1: 
-            cnt = st.number_input(
-                get_txt('unit_cn'), 
-                1, 100, 
-                step=1, 
-                key='coffee_num', 
-                label_visibility="collapsed",
-                on_change=lambda: st.rerun()  # 输入框变化时重新渲染
-            )
+
+        # 金额计算
+        col_amount, col_total = st.columns([1, 1], gap="small")
+        with col_amount: 
+            cnt = st.number_input(get_txt('coffee_amount'), 1, 100, step=1, key='coffee_num')
         
-        # 核心计算：统一按 2美元/杯 为基准
-        paypal_unit = 2  # 2美元/杯
-        paypal_total = cnt * paypal_unit  # PayPal总额（美元）
+        cny_total = cnt * 10
+        usd_total = cnt * 2
         
-        # 微信/支付宝金额：保持与PayPal总额"等值"（示例：1美元≈7人民币）
-        cny_exchange_rate = 7  # 汇率可调整
-        cny_unit = paypal_unit * cny_exchange_rate  # 14元/杯（与2美元等值）
-        cny_total = cnt * cny_unit  # 微信/支付宝总额（人民币）
+        with col_total: 
+            st.markdown(f"""<div style="background:#fff1f2; border-radius:8px; padding:8px; text-align:center; color:#e11d48; font-weight:bold; font-size:1.5rem; height: 100%; display: flex; align-items: center; justify-content: center;">¥{cny_total}</div>""", unsafe_allow_html=True)
         
-        # 根据当前激活的标签页显示对应金额
-        with c2:
-            if st.session_state.active_pay_tab == 'paypal':
-                # PayPal标签页：显示美元金额
-                st.markdown(f"""
-                    <div class="amount-display">
-                        <div class="amount-usd">${paypal_total:.2f}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                # 微信/支付宝标签页：显示人民币金额
-                st.markdown(f"""
-                    <div class="amount-display">
-                        <div class="amount-cny">¥{cny_total}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+        # 支付方式 Tabs
+        st.write("")
+        t1, t2, t3 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
         
-        # 支付标签页（增加激活状态跟踪）
-        tab_container = st.container()
-        with tab_container:
-            t1, t2, t3 = st.tabs([
-                get_txt('pay_wechat'), 
-                get_txt('pay_alipay'), 
-                get_txt('pay_paypal')
-            ])
+        def show_qr(img_path, alt_text):
+            if os.path.exists(img_path): 
+                st.image(img_path, use_container_width=True)
+            else: 
+                # 备用二维码生成
+                qr_data = f"Donate_{cny_total}_{alt_text}"
+                st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={qr_data}", width=180)
+
+        with t1:
+            show_qr("wechat_pay.jpg", "WeChat")
             
-            # 检测标签页激活状态
-            if t1.button("🔄", key="tab_wechat", use_container_width=True, visible=False):
-                st.session_state.active_pay_tab = 'wechat'
-                st.rerun()
-            if t2.button("🔄", key="tab_alipay", use_container_width=True, visible=False):
-                st.session_state.active_pay_tab = 'alipay'
-                st.rerun()
-            if t3.button("🔄", key="tab_paypal", use_container_width=True, visible=False):
-                st.session_state.active_pay_tab = 'paypal'
-                st.rerun()
-        
-        # 显示支付二维码
-        def show_qr(payment_type):
-            if payment_type == "paypal":
-                # PayPal：2美元/杯
-                paypal_link = f"https://paypal.me/yourpaypalid?amount={paypal_total}"
-                st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={paypal_link}", width=140)
-                st.markdown(f"""
-                    <div style="text-align:center; margin-top:10px; font-size:0.85rem; color:#666;">
-                        或直接转账至: yourpaypal@example.com (${paypal_total:.2f})
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                # 微信/支付宝：与2美元等值的人民币
-                st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{cny_total}", width=140)
-        
-        with t1: 
-            st.session_state.active_pay_tab = 'wechat'
-            show_qr("wechat")
-        with t2: 
-            st.session_state.active_pay_tab = 'alipay'
-            show_qr("alipay")
-        with t3: 
-            st.session_state.active_pay_tab = 'paypal'
-            show_qr("paypal")
+        with t2:
+            show_qr("ali_pay.jpg", "Alipay")
+            
+        with t3:
+            st.markdown(f"""
+                <div style="background:#003087; color:white; padding:15px; border-radius:8px; text-align:center; margin-bottom:10px;">
+                    <div style="font-size:0.9rem;">PayPal Total</div>
+                    <div style="font-size:1.4rem; font-weight:bold;">${usd_total}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            # 替换为你的 PayPal.me 链接
+            paypal_link = "https://paypal.me/yourid" 
+            st.link_button(f"👉 Pay ${usd_total}", paypal_link, type="primary", use_container_width=True)
         
         st.write("")
+        st.caption("支付完成后点击下方按钮")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
             st.balloons()
             st.success(get_txt('pay_success').format(count=cnt))
-            time.sleep(2)
+            time.sleep(1)
             st.rerun()
 
     if st.button(get_txt('coffee_btn'), use_container_width=True):
