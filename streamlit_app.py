@@ -367,8 +367,8 @@ st.markdown(f"""
     
     /* Colors for different payment methods */
     .color-wechat {{ color: #2AAD67; }}
-    .color-alipay { color: #1677ff; }}
-    .color-paypal { color: #003087; }}
+    .color-alipay {{ color: #1677ff; }}
+    .color-paypal {{ color: #003087; }}
     
 </style>
 """, unsafe_allow_html=True)
