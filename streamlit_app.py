@@ -103,7 +103,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "alipay",
         "theme_color": ["#1677ff", "#4096ff"],
-        "photo_url": "https://cdn3.emoji.gg/emojis/7960-elon-musk-smoking.gif",
+        "photo_url": "https://www.diydoutu.com/bq/538.gif",
         "items": [
             {"id": "zhacai", "name_zh": "涪陵榨菜", "name_en": "Pickles", "price": 3, "icon": "🥒"},
             {"id": "cola", "name_zh": "肥宅快乐水", "name_en": "Coca Cola", "price": 5, "icon": "🥤"},
@@ -129,7 +129,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "wechat",
         "theme_color": ["#2aad67", "#20c06d"],
-        "photo_url": "https://media1.tenor.com/images/a9d75860a0b379ba69b3e4ca184eba89/tenor.gif",
+        "photo_url": "http://n.sinaimg.cn/sinacn20118/704/w352h352/20181218/3b35-hqhtqsq1135213.gif",
         "items": [
             {"id": "sticker", "name_zh": "微信表情包", "name_en": "Sticker Pack", "price": 1, "icon": "🌝"},
             {"id": "music", "name_zh": "QQ音乐绿钻", "name_en": "Music VIP", "price": 18, "icon": "🎵"},
@@ -155,7 +155,7 @@ CHARACTERS = {
         "currency": "$",
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
-        "photo_url": "https://media1.tenor.com/m/dPzK1quY_PkAAAAd/elon-musk-smoke.gif",
+        "photo_url": "https://media1.tenor.com/images/a9d75860a0b379ba69b3e4ca184eba89/tenor.gif",
         "items": [
             {"id": "check", "name_zh": "推特蓝标", "name_en": "Blue Check", "price": 8, "icon": "✅"},
             {"id": "starlink_sub", "name_zh": "星链月费", "name_en": "Starlink Sub", "price": 110, "icon": "📡"},
