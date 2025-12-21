@@ -439,8 +439,8 @@ with c_btn_col2:
         show_coffee_window()
 
 
-# 数据库统计 - 兼容Streamlit Cloud路径
-DB_DIR = "./"  # 修改为当前目录，兼容Cloud环境
+# 数据库统计
+DB_DIR = os.path.expanduser("~/")
 DB_FILE = os.path.join(DB_DIR, "visit_stats.db")
 def track_stats():
     try:
@@ -461,11 +461,7 @@ def track_stats():
         t_pv = c.execute("SELECT pv_count FROM daily_traffic WHERE date=?", (today,)).fetchone()[0]
         conn.close()
         return t_uv, a_uv, t_pv
-    except Exception as e:
-        # 捕获异常，避免数据库错误导致应用崩溃
-        st.error(f"统计功能临时异常: {str(e)}")
-        return 0, 0, 0
-
+    except: return 0, 0, 0
 
 today_uv, total_uv, today_pv = track_stats()
 st.markdown(f"""
