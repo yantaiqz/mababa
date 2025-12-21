@@ -313,6 +313,10 @@ st.markdown(f"""
     .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
     .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
     .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
+
+    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.8rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
+    .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
+    .bill-paypal-total {{ font-size: 1.8rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
     
     /* 统计条 */
     .stats-bar {{
