@@ -232,7 +232,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 5. CSS (移动端优化 + 视觉深度优化 + 人物照片样式)
+# 5. CSS (优化人物照片排版)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -278,8 +278,13 @@ st.markdown(f"""
         
         /* 移动端人物照片大小调整 */
         .char-photo {{
-            width: 80px !important;
-            height: 80px !important;
+            width: 70px !important;
+            height: 70px !important;
+        }}
+        
+        /* 移动端人物名称调整 */
+        .char-name {{
+            font-size: 0.8rem !important;
         }}
         
         /* 移动端统计条调整 */
@@ -321,8 +326,8 @@ st.markdown(f"""
         
         /* 桌面端人物照片大小 */
         .char-photo {{
-            width: 100px !important;
-            height: 100px !important;
+            width: 90px !important;
+            height: 90px !important;
         }}
     }}
     
@@ -460,47 +465,102 @@ st.markdown(f"""
         text-decoration: none;
     }}
 
-    /* 人物按钮容器样式 */
+    /* 人物按钮容器样式 - 优化居中效果 */
     .char-buttons-container {{
         display: flex;
         justify-content: center;
-        gap: 15px;
-        margin: 10px 0 20px 0;
-        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 20px;
+        margin: 15px 0 30px 0;
+        padding: 0 10px;
     }}
     
-    /* 人物照片样式 */
+    /* 人物按钮卡片 - 新增容器 */
+    .char-button-card {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 120px;
+        position: relative;
+    }}
+    
+    /* 人物照片样式 - 大幅优化 */
     .char-photo {{
+        width: 90px;
+        height: 90px;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid #fff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
+        object-position: center;
+        border: 4px solid #ffffff;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        margin-bottom: 10px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        z-index: 2;
+        background-color: #f8f9fa;
     }}
+    
+    /* 照片悬停效果 */
     .char-photo:hover {{
-        transform: scale(1.05);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        transform: scale(1.08);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     }}
     
-    /* 人物按钮激活状态 */
-    .char-button-active {{
-        background: linear-gradient(135deg, {theme_colors[0]}, {theme_colors[1]}) !important;
-        color: white !important;
-    }}
-    .char-button-active .char-name {{
-        color: white !important;
+    /* 选中状态的照片效果 */
+    .char-photo-active {{
+        border-color: {theme_colors[0]};
+        box-shadow: 0 0 0 2px {theme_colors[1]}40, 0 6px 16px rgba(0,0,0,0.15);
     }}
     
-    /* 人物名称样式 */
+    /* 选中状态的背景指示 */
+    .char-button-card-active::after {{
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, {theme_colors[1]}20 0%, transparent 70%);
+        border-radius: 50%;
+        z-index: 1;
+    }}
+    
+    /* 人物名称样式 - 优化 */
     .char-name {{
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: #333;
         text-align: center;
         margin-top: 5px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background-color: transparent;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 2;
     }}
-
+    
+    /* 选中状态的名称样式 */
+    .char-name-active {{
+        color: {theme_colors[0]};
+        font-weight: 800;
+        background-color: {theme_colors[1]}10;
+    }}
+    
+    /* 人物选择按钮 - 完全透明化 */
+    .char-select-button {{
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        z-index: 3;
+        cursor: pointer;
+    }}
+    
     /* 顶部操作栏样式 */
     .top-actions-bar {{
         display: flex;
@@ -524,6 +584,21 @@ st.markdown(f"""
     /* 平滑滚动 */
     html {{
         scroll-behavior: smooth;
+    }}
+    
+    /* 照片加载占位符 */
+    .char-photo-placeholder {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #999;
+    }}
+    
+    /* 人物按钮的焦点状态 */
+    .char-select-button:focus + .char-photo {{
+        outline: 2px solid {theme_colors[0]};
+        outline-offset: 2px;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -554,37 +629,42 @@ with col_more:
     """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# B. 第二层：三个人物切换按钮 (居中) - 新增照片展示
+# B. 第二层：三个人物切换按钮 (优化照片排版)
 st.markdown('<div class="char-buttons-container">', unsafe_allow_html=True)
-char_cols = st.columns(3, gap="medium")
 chars_list = list(CHARACTERS.items())
 
-for idx, col in enumerate(char_cols):
-    key, data = chars_list[idx]
-    with col:
-        # 判断是否为当前选中的人物
-        is_active = st.session_state.char_key == key
-        # 人物名称
-        char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
-        
-        # 人物选择按钮（包含照片）
-        button_type = "primary" if is_active else "secondary"
-        if st.button(
-            label="",
-            key=f"btn_char_{key}",
-            use_container_width=True,
-            type=button_type
-        ):
-            switch_char(key)
-            st.rerun()
-        
-        # 渲染人物照片和名称
-        st.markdown(f"""
-            <div style="text-align: center; margin-top: -80px; pointer-events: none;">
-                <img src="{data['photo_url']}" class="char-photo" alt="{char_name}">
-                <div class="char-name">{char_name}</div>
-            </div>
-        """, unsafe_allow_html=True)
+# 创建人物卡片
+for key, data in chars_list:
+    # 判断是否为当前选中的人物
+    is_active = st.session_state.char_key == key
+    # 人物名称
+    char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
+    
+    # 人物卡片容器
+    card_class = "char-button-card" + (" char-button-card-active" if is_active else "")
+    photo_class = "char-photo" + (" char-photo-active" if is_active else "")
+    name_class = "char-name" + (" char-name-active" if is_active else "")
+    
+    st.markdown(f"""
+        <div class="{card_class}">
+            <!-- 透明的选择按钮 -->
+            <button class="char-select-button" id="btn_{key}" onclick="document.getElementById('hidden_btn_{key}').click()"></button>
+            
+            <!-- 人物照片 -->
+            <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}" 
+                 onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
+            
+            <!-- 人物名称 -->
+            <div class="{name_class}">{char_name}</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # 隐藏的实际按钮（用于Streamlit交互）
+    hidden_btn_key = f"hidden_btn_{key}"
+    if st.button("", key=hidden_btn_key, style="display: none;"):
+        switch_char(key)
+        st.rerun()
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # C. 标题与余额
