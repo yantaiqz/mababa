@@ -438,7 +438,47 @@ with c_btn_col2:
     if st.button(get_txt('coffee_btn'), use_container_width=True):
         show_coffee_window()
 
-# 简易统计 (无需额外文件)
-if "pv" not in st.session_state: st.session_state.pv = 0
-st.session_state.pv += 1
-st.markdown(f"""<div class="stats-bar"><div style="text-align:center;"><div>{get_txt('pv_today')}</div><div style="font-weight:bold;">{st.session_state.pv * 13 + 240}</div></div></div><br>""", unsafe_allow_html=True)
+
+# 数据库统计 - 兼容Streamlit Cloud路径
+DB_DIR = "./"  # 修改为当前目录，兼容Cloud环境
+DB_FILE = os.path.join(DB_DIR, "visit_stats.db")
+def track_stats():
+    try:
+        conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS daily_traffic (date TEXT PRIMARY KEY, pv_count INTEGER DEFAULT 0)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS visitors (visitor_id TEXT PRIMARY KEY, last_visit_date TEXT)''')
+        today = datetime.datetime.utcnow().date().isoformat()
+        vid = st.session_state["visitor_id"]
+        if "has_counted" not in st.session_state:
+            c.execute("INSERT OR IGNORE INTO daily_traffic (date, pv_count) VALUES (?, 0)", (today,))
+            c.execute("UPDATE daily_traffic SET pv_count = pv_count + 1 WHERE date=?", (today,))
+            c.execute("INSERT OR REPLACE INTO visitors (visitor_id, last_visit_date) VALUES (?, ?)", (vid, today))
+            conn.commit()
+            st.session_state["has_counted"] = True
+        t_uv = c.execute("SELECT COUNT(*) FROM visitors WHERE last_visit_date=?", (today,)).fetchone()[0]
+        a_uv = c.execute("SELECT COUNT(*) FROM visitors").fetchone()[0]
+        t_pv = c.execute("SELECT pv_count FROM daily_traffic WHERE date=?", (today,)).fetchone()[0]
+        conn.close()
+        return t_uv, a_uv, t_pv
+    except Exception as e:
+        # 捕获异常，避免数据库错误导致应用崩溃
+        st.error(f"统计功能临时异常: {str(e)}")
+        return 0, 0, 0
+
+
+today_uv, total_uv, today_pv = track_stats()
+st.markdown(f"""
+<div class="stats-bar">
+    <div style="text-align: center;"><div>{get_txt('visitor_today')}</div><div style="font-weight:700; color:#111;">{today_uv}</div></div>
+    <div style="border-left:1px solid #eee; padding-left:25px; text-align: center;"><div>{get_txt('visitor_total')}</div><div style="font-weight:700; color:#111;">{total_uv}</div></div>
+</div><br><br>
+""", unsafe_allow_html=True)
+
+# 移动端检测
+try:
+    user_agent = st.context.headers.get('User-Agent', '')
+    if any(mobile in user_agent.lower() for mobile in ['mobile', 'android', 'iphone', 'ipad']):
+        st.session_state.is_mobile = True
+except:
+    st.session_state.is_mobile = False
