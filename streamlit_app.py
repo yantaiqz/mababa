@@ -113,6 +113,8 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "alipay",
         "theme_color": ["#1677ff", "#4096ff"],
+        # 人物照片URL（你可以替换为自己的图片链接）
+        "photo_url": "https://t7.baidu.com/it/u=1234567890,1234567890&fm=193&f=GIF",
         "items": [
             {"id": "zhacai", "name_zh": "涪陵榨菜", "name_en": "Pickles", "price": 3, "icon": "🥒"},
             {"id": "cola", "name_zh": "肥宅快乐水", "name_en": "Coca Cola", "price": 5, "icon": "🥤"},
@@ -138,6 +140,8 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "wechat",
         "theme_color": ["#2aad67", "#20c06d"],
+        # 人物照片URL
+        "photo_url": "https://t7.baidu.com/it/u=0987654321,0987654321&fm=193&f=GIF",
         "items": [
             {"id": "sticker", "name_zh": "微信表情包", "name_en": "Sticker Pack", "price": 1, "icon": "🌝"},
             {"id": "music", "name_zh": "QQ音乐绿钻", "name_en": "Music VIP", "price": 18, "icon": "🎵"},
@@ -163,6 +167,8 @@ CHARACTERS = {
         "currency": "$",
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
+        # 人物照片URL
+        "photo_url": "https://t7.baidu.com/it/u=1122334455,1122334455&fm=193&f=GIF",
         "items": [
             {"id": "check", "name_zh": "推特蓝标", "name_en": "Blue Check", "price": 8, "icon": "✅"},
             {"id": "starlink_sub", "name_zh": "星链月费", "name_en": "Starlink Sub", "price": 110, "icon": "📡"},
@@ -226,7 +232,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 5. CSS (移动端优化 + 视觉深度优化)
+# 5. CSS (移动端优化 + 视觉深度优化 + 人物照片样式)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -270,6 +276,12 @@ st.markdown(f"""
             gap: 8px !important;
         }}
         
+        /* 移动端人物照片大小调整 */
+        .char-photo {{
+            width: 80px !important;
+            height: 80px !important;
+        }}
+        
         /* 移动端统计条调整 */
         .stats-bar {{
             flex-direction: column !important;
@@ -305,6 +317,12 @@ st.markdown(f"""
             display: grid !important;
             grid-template-columns: repeat(3, 1fr) !important;
             gap: 15px !important;
+        }}
+        
+        /* 桌面端人物照片大小 */
+        .char-photo {{
+            width: 100px !important;
+            height: 100px !important;
         }}
     }}
     
@@ -450,6 +468,38 @@ st.markdown(f"""
         margin: 10px 0 20px 0;
         flex-wrap: nowrap;
     }}
+    
+    /* 人物照片样式 */
+    .char-photo {{
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+    }}
+    .char-photo:hover {{
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }}
+    
+    /* 人物按钮激活状态 */
+    .char-button-active {{
+        background: linear-gradient(135deg, {theme_colors[0]}, {theme_colors[1]}) !important;
+        color: white !important;
+    }}
+    .char-button-active .char-name {{
+        color: white !important;
+    }}
+    
+    /* 人物名称样式 */
+    .char-name {{
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #333;
+        text-align: center;
+        margin-top: 5px;
+    }}
 
     /* 顶部操作栏样式 */
     .top-actions-bar {{
@@ -504,31 +554,37 @@ with col_more:
     """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# B. 第二层：三个人物切换按钮 (居中)
+# B. 第二层：三个人物切换按钮 (居中) - 新增照片展示
 st.markdown('<div class="char-buttons-container">', unsafe_allow_html=True)
 char_cols = st.columns(3, gap="medium")
 chars_list = list(CHARACTERS.items())
 
-with char_cols[0]:
-    key, data = chars_list[0]
-    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
-        switch_char(key)
-        st.rerun()
-
-with char_cols[1]:
-    key, data = chars_list[1]
-    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
-        switch_char(key)
-        st.rerun()
-
-with char_cols[2]:
-    key, data = chars_list[2]
-    label = f"{data['avatar']} {data['name_zh' if st.session_state.lang == 'zh' else 'name_en']}"
-    if st.button(label, key=f"btn_char_{key}", use_container_width=True):
-        switch_char(key)
-        st.rerun()
+for idx, col in enumerate(char_cols):
+    key, data = chars_list[idx]
+    with col:
+        # 判断是否为当前选中的人物
+        is_active = st.session_state.char_key == key
+        # 人物名称
+        char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
+        
+        # 人物选择按钮（包含照片）
+        button_type = "primary" if is_active else "secondary"
+        if st.button(
+            label="",
+            key=f"btn_char_{key}",
+            use_container_width=True,
+            type=button_type
+        ):
+            switch_char(key)
+            st.rerun()
+        
+        # 渲染人物照片和名称
+        st.markdown(f"""
+            <div style="text-align: center; margin-top: -80px; pointer-events: none;">
+                <img src="{data['photo_url']}" class="char-photo" alt="{char_name}">
+                <div class="char-name">{char_name}</div>
+            </div>
+        """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # C. 标题与余额
