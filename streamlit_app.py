@@ -6,7 +6,6 @@ import os
 import time
 import json
 import re
-import streamlit.components.v1 as components
 
 # ==========================================
 # 1. 基础配置
@@ -27,16 +26,21 @@ def detect_browser_language():
         headers = st.context.headers
         accept_language = headers.get('Accept-Language', 'zh')
         lang_codes = re.findall(r'([a-z]{2})(?:-[A-Z]{2})?', accept_language.lower())
-        if 'zh' in lang_codes: return 'zh'
-        elif 'en' in lang_codes: return 'en'
-        else: return 'zh'
-    except: return 'zh'
+        if 'zh' in lang_codes:
+            return 'zh'
+        elif 'en' in lang_codes:
+            return 'en'
+        else:
+            return 'zh'
+    except:
+        return 'zh'
 
+# 初始化语言设置
 if 'lang' not in st.session_state:
     st.session_state.lang = detect_browser_language()
 
 # ==========================================
-# 3. 数据配置 (新增 photo_url)
+# 3. 数据配置
 # ==========================================
 LANG_TEXT = {
     "zh": {
@@ -106,8 +110,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "alipay",
         "theme_color": ["#1677ff", "#4096ff"],
-        # 使用真实图片URL，如果失效会自动回退到 Emoji
-        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Jack_Ma_2018.jpg/440px-Jack_Ma_2018.jpg",
+        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
         "items": [
             {"id": "zhacai", "name_zh": "涪陵榨菜", "name_en": "Pickles", "price": 3, "icon": "🥒"},
             {"id": "cola", "name_zh": "肥宅快乐水", "name_en": "Coca Cola", "price": 5, "icon": "🥤"},
@@ -133,7 +136,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "wechat",
         "theme_color": ["#2aad67", "#20c06d"],
-        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Pony_Ma_2015.jpg/440px-Pony_Ma_2015.jpg",
+        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
         "items": [
             {"id": "sticker", "name_zh": "微信表情包", "name_en": "Sticker Pack", "price": 1, "icon": "🌝"},
             {"id": "music", "name_zh": "QQ音乐绿钻", "name_en": "Music VIP", "price": 18, "icon": "🎵"},
@@ -159,7 +162,7 @@ CHARACTERS = {
         "currency": "$",
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
-        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Elon_Musk_Colorado_2022.jpg/440px-Elon_Musk_Colorado_2022.jpg",
+        "photo_url": "https://ichef.bbci.co.uk/news/800/cpsprodpb/7727/production/_103330503_musk3.jpg",
         "items": [
             {"id": "check", "name_zh": "推特蓝标", "name_en": "Blue Check", "price": 8, "icon": "✅"},
             {"id": "starlink_sub", "name_zh": "星链月费", "name_en": "Starlink Sub", "price": 110, "icon": "📡"},
@@ -223,7 +226,7 @@ def click_item_add(item_id, item_price, current_balance):
     update_count(item_id, 1, item_price, current_balance)
 
 # ==========================================
-# 5. CSS (优化人物照片排版)
+# 5. CSS (重点优化人物选择区域)
 # ==========================================
 current_char = get_char()
 theme_colors = current_char['theme_color']
@@ -261,21 +264,24 @@ st.markdown(f"""
             padding: 8px 0 !important;
         }}
         
-        /* 移动端人物按钮调整 */
-        .char-buttons-container {{
-            flex-wrap: wrap !important;
-            gap: 8px !important;
+        /* 移动端人物选择区域优化 */
+        .char-select-container {{
+            padding: 0 15px !important;
+            margin: 10px 0 25px 0 !important;
         }}
         
-        /* 移动端人物照片大小调整 */
+        .char-card {{
+            max-width: 100px !important;
+        }}
+        
         .char-photo {{
             width: 70px !important;
             height: 70px !important;
         }}
         
-        /* 移动端人物名称调整 */
         .char-name {{
-            font-size: 0.8rem !important;
+            font-size: 0.85rem !important;
+            padding: 3px 6px !important;
         }}
         
         /* 移动端统计条调整 */
@@ -315,17 +321,17 @@ st.markdown(f"""
             gap: 15px !important;
         }}
         
-        /* 桌面端人物照片大小 */
-        .char-photo {{
-            width: 90px !important;
-            height: 90px !important;
+        /* 桌面端人物选择区域 */
+        .char-select-container {{
+            padding: 0 20px !important;
+            margin: 15px 0 35px 0 !important;
         }}
     }}
     
     /* 隐藏 Streamlit 默认组件 */
     #MainMenu, footer, header {{visibility: hidden;}}
     
-    /* 磨砂玻璃粘性头部 (Glassmorphism Sticky Header) */
+    /* 磨砂玻璃粘性头部 */
     .header-container {{
         position: sticky; top: 0; z-index: 999;
         background: linear-gradient(180deg, {theme_colors[0]}ee, {theme_colors[1]}dd);
@@ -456,27 +462,41 @@ st.markdown(f"""
         text-decoration: none;
     }}
 
-    /* 人物按钮容器样式 - 优化居中效果 */
-    .char-buttons-container {{
+    /* ========== 人物选择区域核心优化 ========== */
+    /* 人物选择容器 */
+    .char-select-container {{
+        width: 100%;
         display: flex;
         justify-content: center;
-        align-items: flex-start;
-        gap: 20px;
-        margin: 15px 0 30px 0;
-        padding: 0 10px;
+        align-items: center;
+        gap: 30px; /* 增加间距，提升呼吸感 */
+        padding: 0 20px;
+        margin: 15px 0 35px 0;
+        flex-wrap: wrap;
     }}
     
-    /* 人物按钮卡片 - 新增容器 */
-    .char-button-card {{
+    /* 人物卡片 - 独立容器 */
+    .char-card {{
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: 100%;
+        justify-content: center;
         max-width: 120px;
+        width: 100%;
         position: relative;
+        cursor: pointer;
     }}
     
-    /* 人物照片样式 - 大幅优化 */
+    /* 人物照片容器 - 新增外层容器，优化居中 */
+    .char-photo-wrapper {{
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+    }}
+    
+    /* 人物照片样式 - 优化尺寸和阴影 */
     .char-photo {{
         width: 90px;
         height: 90px;
@@ -484,66 +504,74 @@ st.markdown(f"""
         object-fit: cover;
         object-position: center;
         border: 4px solid #ffffff;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        margin-bottom: 10px;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        position: relative;
-        z-index: 2;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
         background-color: #f8f9fa;
-        cursor: pointer;
+        z-index: 2;
+        position: relative;
     }}
     
     /* 照片悬停效果 */
-    .char-photo:hover {{
-        transform: scale(1.08);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    .char-card:hover .char-photo {{
+        transform: scale(1.05);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }}
     
-    /* 选中状态的照片效果 */
-    .char-photo-active {{
+    /* 选中状态 - 照片边框和背景光环 */
+    .char-photo.active {{
         border-color: {theme_colors[0]};
-        box-shadow: 0 0 0 2px {theme_colors[1]}40, 0 6px 16px rgba(0,0,0,0.15);
+        box-shadow: 0 0 0 2px {theme_colors[1]}30, 0 4px 12px rgba(0,0,0,0.12);
     }}
     
-    /* 选中状态的背景指示 */
-    .char-button-card-active::after {{
+    .char-photo-wrapper::after {{
         content: "";
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
         width: 100px;
         height: 100px;
         background: radial-gradient(circle, {theme_colors[1]}20 0%, transparent 70%);
         border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
         z-index: 1;
     }}
     
-    /* 人物名称样式 - 优化 */
+    .char-card.active .char-photo-wrapper::after {{
+        opacity: 1;
+    }}
+    
+    /* 人物名称样式 - 优化字体和间距 */
     .char-name {{
         font-weight: 700;
         font-size: 0.95rem;
         color: #333;
         text-align: center;
-        margin-top: 5px;
-        padding: 4px 8px;
+        padding: 4px 10px;
         border-radius: 12px;
-        background-color: transparent;
         transition: all 0.2s ease;
-        position: relative;
         z-index: 2;
+        position: relative;
+        white-space: nowrap;
     }}
     
-    /* 选中状态的名称样式 */
-    .char-name-active {{
+    /* 选中状态的名称 */
+    .char-card.active .char-name {{
         color: {theme_colors[0]};
         font-weight: 800;
         background-color: {theme_colors[1]}10;
     }}
     
-    /* 隐藏的按钮容器 */
-    .hidden-buttons {{
+    /* 隐藏的选择按钮 */
+    .char-select-btn {{
         display: none !important;
+    }}
+    
+    /* 照片加载失败占位符 */
+    .char-photo-placeholder {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #999;
     }}
     
     /* 顶部操作栏样式 */
@@ -570,20 +598,11 @@ st.markdown(f"""
     html {{
         scroll-behavior: smooth;
     }}
-    
-    /* 照片加载占位符 */
-    .char-photo-placeholder {{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: #999;
-    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 6. 主页面逻辑
+# 6. 主页面逻辑 (优化人物选择区域)
 # ==========================================
 
 # A. 第一层：语言切换 + more fun (右对齐)
@@ -608,43 +627,41 @@ with col_more:
     """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# B. 第二层：三个人物切换按钮 (优化照片排版)
-st.markdown('<div class="char-buttons-container">', unsafe_allow_html=True)
+# B. 第二层：人物选择区域 (核心优化)
+st.markdown('<div class="char-select-container">', unsafe_allow_html=True)
 chars_list = list(CHARACTERS.items())
 
-# 创建人物卡片
-char_cols = st.columns(3, gap="medium")
-for idx, (key, data) in enumerate(chars_list):
-    with char_cols[idx]:
-        # 判断是否为当前选中的人物
-        is_active = st.session_state.char_key == key
-        # 人物名称
-        char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
-        
-        # 人物卡片容器
-        card_class = "char-button-card" + (" char-button-card-active" if is_active else "")
-        photo_class = "char-photo" + (" char-photo-active" if is_active else "")
-        name_class = "char-name" + (" char-name-active" if is_active else "")
-        
-        # 渲染人物卡片
-        st.markdown(f"""
-<div class="{card_class}">
-    <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}" 
-         onclick="document.getElementById('char_btn_{key}').click()"
-         onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
-    <div class="{name_class}" onclick="document.getElementById('char_btn_{key}').click()">{char_name}</div>
-</div>
-        """, unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# C. 隐藏的按钮区域
-st.markdown('<div class="hidden-buttons">', unsafe_allow_html=True)
-# 创建隐藏的按钮用于处理点击事件
+# 遍历创建人物卡片
 for key, data in chars_list:
-    if st.button(f"Select {key}", key=f"char_btn_{key}"):
+    is_active = st.session_state.char_key == key
+    char_name = data['name_zh'] if st.session_state.lang == 'zh' else data['name_en']
+    
+    # 创建隐藏的选择按钮（核心交互）
+    btn_clicked = st.button(
+        label="",
+        key=f"char_btn_{key}",
+        use_container_width=True,
+        class_="char-select-btn"
+    )
+    
+    if btn_clicked:
         switch_char(key)
         st.rerun()
+    
+    # 人物卡片HTML（纯静态，无内联事件）
+    card_class = "char-card" + (" active" if is_active else "")
+    photo_class = "char-photo" + (" active" if is_active else "")
+    
+    st.markdown(f"""
+    <div class="{card_class}">
+        <div class="char-photo-wrapper">
+            <img src="{data['photo_url']}" class="{photo_class}" alt="{char_name}"
+                 onerror="this.classList.add('char-photo-placeholder'); this.innerHTML='{data['avatar']}'; this.src='';">
+        </div>
+        <div class="char-name">{char_name}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # D. 标题与余额
