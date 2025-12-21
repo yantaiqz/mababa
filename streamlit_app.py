@@ -151,7 +151,7 @@ CHARACTERS = {
         "name_zh": "马斯克",
         "name_en": "Elon Musk",
         "avatar": "🚀",
-        "money": 250_000_000_000, 
+        "money": 700_000_000_000, 
         "currency": "$",
         "bill_type": "paypal",
         "theme_color": ["#003087", "#009cde"],
