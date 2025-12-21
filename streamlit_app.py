@@ -32,10 +32,6 @@ def detect_browser_language():
 if 'lang' not in st.session_state:
     st.session_state.lang = detect_browser_language()
 
-# 新增：记录当前激活的支付标签页
-if 'active_pay_tab' not in st.session_state:
-    st.session_state.active_pay_tab = 'wechat'
-
 # ==========================================
 # 3. 数据配置
 # ==========================================
@@ -238,12 +234,10 @@ st.markdown(f"""
     @media (max-width: 768px) {{ .block-container {{ padding: 0.5rem 0.5rem 2rem 0.5rem !important; }} }}
     
     /* === 人物头像样式 (核心优化) === */
-    /* 头像容器 */
     .char-avatar-container {{
         display: flex; justify-content: center; align-items: center;
         margin-bottom: 8px; position: relative;
     }}
-    /* 头像图片 */
     .char-avatar-img {{
         width: 90px; height: 90px;
         border-radius: 50%;
@@ -253,7 +247,6 @@ st.markdown(f"""
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 2;
     }}
-    /* 激活状态的头像 */
     .char-avatar-img.active {{
         border-color: {theme_colors[0]};
         transform: scale(1.1);
@@ -277,25 +270,19 @@ st.markdown(f"""
         background: white; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         border: 1px solid rgba(229, 231, 235, 0.5);
     }}
-  
-    /* 4. Emoji 按钮 (完全透明 + 点击反馈) */
+   
+    /* Emoji 按钮 */
     button[kind="tertiary"] {{
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        transition: transform 0.1s !important;
+        background-color: transparent !important; border: none !important;
+        padding: 0 !important; transition: transform 0.1s !important;
     }}
     button[kind="tertiary"]:hover {{ transform: scale(1.1) !important; }}
-    button[kind="tertiary"]:active {{ transform: scale(0.9) !important; }}
     button[kind="tertiary"] p {{
-        font-size: 4rem !important; 
-        margin: 0 !important;
-        padding-top: 5px !important;
+        font-size: 4rem !important; margin: 0 !important; padding-top: 5px !important;
         text-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }}
     
-    /* 5. 文本与数字优化 */
+    /* 文本与数字 */
     .item-name {{ 
         font-size: 1rem; font-weight: 700; color: #1f2937; 
         height: 36px; display: flex; align-items: center; justify-content: center; 
@@ -306,13 +293,6 @@ st.markdown(f"""
         text-align: center; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;
     }}
     
-    /* 6. 操作按钮美化 */
-    button[kind="secondary"], button[kind="primary"] {{ 
-        min-height: 36px; border-radius: 10px; font-weight: 700; border: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }}
-    
-    /* 数量显示框 */
     .count-display {{
         text-align: center; line-height: 36px; 
         font-weight: 800; color: #374151; font-size: 1.1rem;
@@ -320,30 +300,19 @@ st.markdown(f"""
         border: 1px solid #e5e7eb; font-family: 'JetBrains Mono', monospace;
     }}
 
-    /* 7. 账单拟物化 (Receipt) */
+    /* 账单样式 */
     .bill-container {{ 
         background: white; margin: 30px auto; max-width: 420px; 
-        box-shadow: 0 15px 40px rgba(0,0,0,0.12); border-radius: 6px; overflow: hidden; 
-        position: relative;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12); border-radius: 6px; overflow: hidden; position: relative;
     }}
-    /* 锯齿边缘效果 (伪元素模拟) */
     .bill-container::after {{
         content: ""; position: absolute; bottom: -5px; left: 0; right: 0; height: 10px;
-        background: radial-gradient(circle, transparent 70%, white 75%) 0 0 / 10px 10px repeat-x;
-        transform: rotate(180deg);
+        background: radial-gradient(circle, transparent 70%, white 75%) 0 0 / 10px 10px repeat-x; transform: rotate(180deg);
     }}
-    
     .bill-footer {{ background: #fafafa; padding: 25px; text-align: center; border-top: 2px dashed #eee; }}
-    
-    /* 皮肤微调 */
     .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
-    .bill-wechat-total {{ font-size: 1.8rem; font-weight: 800; text-align: center; margin: 15px 0; color: #111; font-family: 'JetBrains Mono'; }}
-    
     .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
-    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.8rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
-    
     .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
-    .bill-paypal-total {{ font-size: 1.8rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
     
     /* 统计条 */
     .stats-bar {{
@@ -354,40 +323,53 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }}
 
-    /* 8. 右上角按钮样式 - 统一格式 */
+    /* 右上角按钮样式 */
     .top-btn {{
-        width: 100%;
-        padding: 0.5rem 0;
-        background-color: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        color: #333;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        font-weight: 600;
+        width: 100%; padding: 0.5rem 0; background-color: white;
+        border: 1px solid #e5e7eb; border-radius: 0.75rem; color: #333;
+        font-size: 0.9rem; cursor: pointer; transition: all 0.15s ease; font-weight: 600;
+        text-align: center; display: inline-block; text-decoration: none;
+    }}
+    .top-btn:hover {{ background-color: #f9fafb; border-color: #d1d5db; transform: translateY(-1px); }}
+
+    /* =================================================================
+       New Styles: Unified Payment Card Layout
+       ================================================================= */
+    .pay-card {
+        background: #fdfdfd;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
         text-align: center;
-        display: inline-block;
-        text-decoration: none;
-    }}
-    .top-btn:hover {{
-        background-color: #f9fafb;
-        border-color: #d1d5db;
-        transform: translateY(-1px);
-    }}
-
-    /* 金额显示样式优化 */
-    .amount-display {{
-        background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; 
-        padding:8px; text-align:center;
-    }}
-    .amount-cny {{
-        color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';
-    }}
-    .amount-usd {{
-        color:#003087; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';
-    }}
-
+        margin-top: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .pay-amount-display {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 10px 0;
+    }
+    .pay-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    .pay-instruction {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin-top: 15px;
+        margin-bottom: 5px;
+    }
+    
+    /* Colors for different payment methods */
+    .color-wechat { color: #2AAD67; }
+    .color-alipay { color: #1677ff; }
+    .color-paypal { color: #003087; }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -396,7 +378,7 @@ st.markdown(f"""
 # ==========================================
 # 顶部操作栏
 st.markdown('<div class="top-actions-bar">', unsafe_allow_html=True)
-col_lang, col_more = st.columns([1, 1.2], gap="small")
+col_lang, col_more = st.columns([1, 1], gap="small")
 
 with col_lang:
     # 1. 语言切换按钮 (逻辑按钮)
@@ -407,7 +389,6 @@ with col_lang:
 
 with col_more:
     # 2. 更多乐子按钮 (链接按钮)
-    # 使用 st.link_button 替代 html <a> 标签，样式与 st.button 完美一致
     st.link_button(
         label=get_txt('more_label'), 
         url="https://laodeng.streamlit.app/", 
@@ -555,7 +536,7 @@ if total_spent > 0:
         st.success(get_txt('balance_zero'))
         
 # ==========================================
-# 7. 底部咖啡 & 统计 (修复报错版)
+# 7. 底部咖啡 & 统计 (UI 统一优化版)
 # ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
@@ -573,7 +554,7 @@ with c_btn_col2:
                 if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): set_val(num)
         st.write("")
 
-        # 金额计算
+        # 输入与计算
         col_amount, col_total = st.columns([1, 1], gap="small")
         with col_amount: 
             cnt = st.number_input(get_txt('coffee_amount'), 1, 100, step=1, key='coffee_num')
@@ -584,37 +565,48 @@ with c_btn_col2:
         with col_total: 
             st.markdown(f"""<div style="background:#fff1f2; border-radius:8px; padding:8px; text-align:center; color:#e11d48; font-weight:bold; font-size:1.5rem; height: 100%; display: flex; align-items: center; justify-content: center;">¥{cny_total}</div>""", unsafe_allow_html=True)
         
+        # 统一支付卡片渲染函数
+        def render_pay_tab(title, amount_str, color_class, img_path, qr_data_suffix, link_url=None):
+            st.markdown(f"""
+                <div class="pay-card">
+                    <div class="pay-label {color_class}">{title}</div>
+                    <div class="pay-amount-display {color_class}">{amount_str}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # 显示二维码 (或Logo)
+            # 使用 container 居中图片
+            c1, c2, c3 = st.columns([1, 3, 1])
+            with c2:
+                if os.path.exists(img_path): 
+                    st.image(img_path, use_container_width=True)
+                else: 
+                    # 备用二维码生成
+                    qr_data = f"Donate_{cny_total}_{qr_data_suffix}"
+                    st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={qr_data}", use_container_width=True)
+            
+            # 如果是PayPal等需要外链的，显示按钮
+            if link_url:
+                st.link_button(f"👉 Pay {amount_str}", link_url, type="primary", use_container_width=True)
+            else:
+                st.markdown('<div class="pay-instruction">请使用手机扫描上方二维码</div>', unsafe_allow_html=True)
+
         # 支付方式 Tabs
         st.write("")
         t1, t2, t3 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
         
-        def show_qr(img_path, alt_text):
-            if os.path.exists(img_path): 
-                st.image(img_path, use_container_width=True)
-            else: 
-                # 备用二维码生成
-                qr_data = f"Donate_{cny_total}_{alt_text}"
-                st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={qr_data}", width=180)
-
         with t1:
-            show_qr("wechat_pay.jpg", "WeChat")
+            render_pay_tab("WeChat Pay", f"¥{cny_total}", "color-wechat", "wechat_pay.jpg", "WeChat")
             
         with t2:
-            show_qr("ali_pay.jpg", "Alipay")
+            render_pay_tab("Alipay", f"¥{cny_total}", "color-alipay", "ali_pay.jpg", "Alipay")
             
         with t3:
-            st.markdown(f"""
-                <div style="background:#003087; color:white; padding:15px; border-radius:8px; text-align:center; margin-bottom:10px;">
-                    <div style="font-size:0.9rem;">PayPal Total</div>
-                    <div style="font-size:1.4rem; font-weight:bold;">${usd_total}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            # 替换为你的 PayPal.me 链接
-            paypal_link = "https://paypal.me/yourid" 
-            st.link_button(f"👉 Pay ${usd_total}", paypal_link, type="primary", use_container_width=True)
+            # PayPal 特殊处理：使用 paypal.png (如果不存在则用API生成二维码作为占位), 并提供链接
+            # 这里的 qr_data_suffix 设为 PayPal 仅用于生成备用图
+            render_pay_tab("PayPal", f"${usd_total}", "color-paypal", "paypal.png", "PayPal", "https://paypal.me/yourid")
         
         st.write("")
-        st.caption("支付完成后点击下方按钮")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
             st.balloons()
             st.success(get_txt('pay_success').format(count=cnt))
