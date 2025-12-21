@@ -372,10 +372,12 @@ for i in range(0, len(items), cols_per_row):
                     with b2: st.markdown(f'<div class="count-display">{st.session_state.cart[c_key].get(item["id"], 0)}</div>', unsafe_allow_html=True)
                     with b3: st.button("＋", key=f"inc_{c_key}_{item['id']}", on_click=update_count, args=(item['id'], 1, item['price'], balance), type="primary", use_container_width=True)
 
-# 账单与分享
+
+# E. 账单与分享功能
 if total_spent > 0:
     st.markdown("<br><br>", unsafe_allow_html=True)
     bill_type = current_char['bill_type']
+    
     purchased_items = []
     item_count_total = 0
     for item in items:
@@ -387,26 +389,64 @@ if total_spent > 0:
 
     qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://mababa.streamlit.app"
     
-    # 生成账单 HTML (省略具体内容以节省篇幅，逻辑与之前相同)
-    # ... [此处保留原有的账单 HTML 生成逻辑] ...
-    # 为保证完整性，简写账单显示逻辑：
-    bill_html = f"""<div class="bill-container"><div style="padding:20px; text-align:center;"><h3>{get_txt('total_spent')}</h3><h1 style="color:{theme_colors[0]}">{currency}{total_spent:,.0f}</h1></div></div>"""
-    
-    # 恢复完整账单逻辑
+    # 账单 HTML
+    bill_html = ""
     if bill_type == 'wechat':
-         bill_html = f"""<div class="bill-container"><div class="bill-wechat-header">{get_txt('pay_wechat')}</div><div style="padding:20px; text-align:center; font-family:'JetBrains Mono'; font-size:2rem; font-weight:bold;">{currency}{total_spent:,.0f}</div></div>"""
+        bill_html = f"""
+        <div class="bill-container bill-wechat">
+            <div class="bill-wechat-header"><span>{get_txt('pay_wechat')}</span></div>
+            <div class="bill-wechat-total">{currency}{total_spent:,.0f}</div>
+            <div style="text-align: center; color: #666; margin-bottom: 20px;">{get_txt('total_spent')}</div>
+            <div style="padding: 0 25px;"><hr style="border-top: 1px solid #eee; margin: 10px 0;">
+                <div style="max-height: 400px; overflow-y: auto;">
+        """
+        for name, cnt, cost in purchased_items:
+            bill_html += f"""<div style="display: flex; justify-content: space-between; margin: 12px 0; font-size: 0.95rem; color: #333;"><span>{name} x{cnt}</span><span style="font-weight: bold;">{currency}{cost:,.0f}</span></div>"""
+        bill_html += f"""</div></div>
+            <div class="bill-footer"><div style="color: #999; font-size: 0.85rem; margin-bottom: 8px;">{get_txt('scan_to_play')}</div><img src="{qr_url}" style="width: 100px; height: 100px; mix-blend-mode: multiply;"></div>
+        </div>"""
     elif bill_type == 'alipay':
-         bill_html = f"""<div class="bill-container"><div class="bill-alipay-header"><span>Bill</span></div><div style="padding:20px; text-align:right; font-family:'JetBrains Mono'; font-size:2rem; font-weight:bold; color:#1677ff;">{currency}{total_spent:,.0f}</div></div>"""
-    else:
-         bill_html = f"""<div class="bill-container"><div class="bill-paypal-header">PayPal</div><div style="padding:20px; text-align:center; font-family:'JetBrains Mono'; font-size:2rem; font-weight:bold; color:#003087;">{currency}{total_spent:,.0f}</div></div>"""
+        bill_html = f"""
+        <div class="bill-container bill-alipay">
+            <div class="bill-alipay-header"><span>{'<'}</span><span>{get_txt('receipt_title')}</span><span>...</span></div>
+            <div style="padding: 15px;">
+        """
+        for name, cnt, cost in purchased_items:
+            bill_html += f"""<div style="display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f5f5f5; font-size: 0.95rem;"><span style="color: #333;">{name} x{cnt}</span><span style="font-weight: bold; color: #333;">-{currency}{cost:,.0f}</span></div>"""
+        bill_html += f"""</div>
+            <div class="bill-alipay-total">{get_txt('total_spent')}: <span style="font-size: 1.6rem; color: #1677ff;">{currency}{total_spent:,.0f}</span></div>
+            <div class="bill-footer"><div style="display: flex; align-items: center; justify-content: center; gap: 15px;"><img src="{qr_url}" style="width: 80px; height: 80px;"><div style="text-align: left; font-size: 0.85rem; color: #999;"><div>{get_txt('scan_to_play')}</div><div style="color: #1677ff; font-weight:bold;">PK Billionaires</div></div></div></div>
+        </div>"""
+    else: # PayPal
+        bill_html = f"""
+        <div class="bill-container bill-paypal">
+            <div class="bill-paypal-header"><div class="bill-paypal-logo" style="font-size: 1.5rem; font-weight: 900; font-style: italic;">PayPal</div><div style="font-size: 0.9rem; opacity: 0.8;">{datetime.datetime.now().strftime('%Y-%m-%d')}</div></div>
+            <div class="bill-paypal-total">{currency}{total_spent:,.0f}</div>
+            <div style="padding: 0 30px;"><div style="font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">DETAILS</div>
+        """
+        for name, cnt, cost in purchased_items:
+            bill_html += f"""<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem;"><span>{name} ({cnt})</span><span>{currency}{cost:,.0f}</span></div>"""
+        bill_html += f"""</div>
+            <div class="bill-footer" style="margin-top: 30px;"><img src="{qr_url}" style="width: 80px; height: 80px;"><div style="font-size: 0.8rem; color: #aaa; margin-top: 8px;">Scan to challenge Elon</div></div>
+        </div>"""
 
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.markdown(bill_html, unsafe_allow_html=True)
+        
+        # 分享弹窗
+        st.write("")
         @st.dialog(get_txt("share_modal_title"), width="large")
         def show_share_modal(html, amount, count):
             st.markdown(html, unsafe_allow_html=True)
-            st.code(get_txt('share_copy_text').format(amount=amount, item_count=count))
+            share_text = get_txt('share_copy_text').format(amount=amount, item_count=count)
+            st.markdown(f"""
+                <div style="margin-top: 25px; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: center; border:1px solid #e2e8f0;">
+                    <div style="font-weight: 700; color: #333; margin-bottom: 10px;">{get_txt('share_prompt')}</div>
+                    <code style="display: block; padding: 12px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #475569; word-break: break-all; font-family: 'JetBrains Mono', monospace;">{share_text}</code>
+                </div>
+            """, unsafe_allow_html=True)
+
         if st.button(get_txt("share_btn"), type="primary", use_container_width=True):
             show_share_modal(bill_html, f"{currency}{total_spent:,.0f}", item_count_total)
 
@@ -414,30 +454,41 @@ if total_spent > 0:
         st.balloons()
         st.success(get_txt('balance_zero'))
 
-# 底部打赏
+# ==========================================
+# 6. 底部咖啡 & 统计
+# ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
 with c_btn_col2:
     @st.dialog(" " + get_txt('coffee_title'), width="small")
     def show_coffee_window():
-        st.markdown(f"""<div style="text-align:center; color:#666; margin-bottom:15px;">{get_txt('coffee_desc')}</div>""", unsafe_allow_html=True)
-        col_amount, col_total = st.columns([1, 1], gap="small")
-        with col_amount: cnt = st.number_input(get_txt('coffee_amount'), 1, 100, step=1, key='coffee_num')
-        cny_total, usd_total = cnt * 10, cnt * 2
-        with col_total: st.markdown(f"""<div style="background:#fff1f2; border-radius:8px; padding:8px; text-align:center; color:#e11d48; font-weight:bold; font-size:1.5rem;">¥{cny_total}</div>""", unsafe_allow_html=True)
-        
-        tabs = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
-        with tabs[2]: st.markdown(f"""<div style="background:#003087; color:white; padding:10px; border-radius:8px; text-align:center;">PayPal: ${usd_total}</div>""", unsafe_allow_html=True)
-        
+        st.markdown(f"""<div style="background:white; border:1px solid #eee; border-radius:12px; padding:15px; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.05); margin-bottom:20px;"><p style="margin:0; color:#555;">{get_txt('coffee_desc')}</p></div>""", unsafe_allow_html=True)
+        presets = [("☕", 1), ("🍗", 3), ("🚀", 5)]
+        def set_val(n): st.session_state.coffee_num = n
+        cols = st.columns(3, gap="small")
+        for i, (icon, num) in enumerate(presets):
+            with cols[i]:
+                if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): set_val(num)
+        st.write("")
+        c1, c2 = st.columns([1, 1], gap="small")
+        with c1: cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="collapsed")
+        total = cnt * 10
+        with c2: st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
+        t1, t2 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay')])
+        def show_qr(img_path):
+            if os.path.exists(img_path): st.image(img_path, use_container_width=True)
+            else: st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}", width=140)
+        with t1: show_qr("wechat_pay.jpg")
+        with t2: show_qr("ali_pay.jpg")
+        st.write("")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
             st.balloons()
-            st.success(get_txt('pay_success'))
-            time.sleep(1)
+            st.success(get_txt('pay_success').format(count=cnt))
+            time.sleep(2)
             st.rerun()
 
     if st.button(get_txt('coffee_btn'), use_container_width=True):
         show_coffee_window()
-
 
 # 数据库统计
 DB_DIR = os.path.expanduser("~/")
