@@ -72,7 +72,7 @@ LANG_TEXT = {
         "scan_to_play": "长按识别二维码挑战",
         "pv_today": "今日 PV",
         "pay_choose": "选择支付方式",
-        "coffee_amount": "请输入打赏金额"
+        "coffee_amount": "请输入打赏杯数"
     },
     "en": {
         "title": "Spend {name}'s Money",
@@ -100,7 +100,7 @@ LANG_TEXT = {
         "scan_to_play": "Scan to Play",
         "pv_today": "Today PV",
         "pay_choose": "Choose Payment Method",
-        "coffee_amount": "Enter Donation Amount"
+        "coffee_amount": "Enter Coffee Count"
     }
 }
 
@@ -666,7 +666,7 @@ if total_spent > 0:
         st.success(get_txt('balance_zero'))
 
 # ==========================================
-# 7. 底部咖啡 & 统计 (新增PayPal支付)
+# 7. 底部咖啡 & 统计 (PayPal 每单位 2 美元)
 # ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
@@ -682,13 +682,18 @@ with c_btn_col2:
                 if st.button(f"{icon} {num}", use_container_width=True, key=f"p_btn_{i}"): set_val(num)
         st.write("")
         
-        # 金额输入
+        # 金额输入 - 统一按杯数计算
         col_amount, col_total = st.columns([1, 1], gap="small")
         with col_amount: 
             cnt = st.number_input(get_txt('coffee_amount'), 1, 100, step=1, key='coffee_num', label_visibility="visible")
-        total = cnt * 10
+        
+        # 微信/支付宝：每杯10元
+        cny_total = cnt * 10
+        # PayPal：每杯2美元
+        usd_total = cnt * 2
+        
         with col_total: 
-            st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center; height:100%; display:flex; align-items:center; justify-content:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center; height:100%; display:flex; align-items:center; justify-content:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{cny_total}</div></div>""", unsafe_allow_html=True)
         
         # 支付方式选择（新增PayPal）
         st.markdown(f"<div style='text-align:center; font-weight:bold; margin:15px 0;'>{get_txt('pay_choose')}</div>", unsafe_allow_html=True)
@@ -699,7 +704,7 @@ with c_btn_col2:
                 st.image(img_path, use_container_width=True)
             else: 
                 # 生成对应支付方式的二维码
-                qr_data = f"Donate_{total}_{alt_text}"
+                qr_data = f"Donate_{cny_total}_{alt_text}"
                 st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={qr_data}", width=180)
         
         with payment_tabs[0]: 
@@ -707,18 +712,19 @@ with c_btn_col2:
         with payment_tabs[1]: 
             show_qr("ali_pay.jpg", "Alipay")
         with payment_tabs[2]: 
-            # PayPal支付展示
+            # PayPal支付展示 - 每单位2美元
             st.markdown("""
                 <div style="background:#003087; color:white; padding:15px; border-radius:8px; text-align:center; margin-bottom:15px;">
                     <div style="font-size:1.2rem; font-weight:bold; font-style:italic;">PayPal</div>
+                    <div style="font-size:0.9rem; opacity:0.9;">{cnt} Cups × $2 = ${usd_total}</div>
                 </div>
-            """, unsafe_allow_html=True)
+            """.format(cnt=cnt, usd_total=usd_total), unsafe_allow_html=True)
             # 这里替换为你的PayPal收款链接
             paypal_link = "https://paypal.me/yourpaypalid"
             st.markdown(f"""
                 <a href="{paypal_link}" target="_blank" style="display:block; text-align:center; margin:10px 0;">
                     <button style="background:#009cde; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                        🛒 Pay with PayPal (${total/7:.2f})
+                        🛒 Pay ${usd_total} with PayPal
                     </button>
                 </a>
             """, unsafe_allow_html=True)
