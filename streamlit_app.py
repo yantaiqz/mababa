@@ -129,7 +129,7 @@ CHARACTERS = {
         "currency": "¥",
         "bill_type": "wechat",
         "theme_color": ["#2aad67", "#20c06d"],
-        "photo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Pony_Ma_2015.jpg/440px-Pony_Ma_2015.jpg",
+        "photo_url": "https://media.tenor.com/images/7c271d27815fc435e03dbe6f1aadc258/tenor.gif",
         "items": [
             {"id": "sticker", "name_zh": "微信表情包", "name_en": "Sticker Pack", "price": 1, "icon": "🌝"},
             {"id": "music", "name_zh": "QQ音乐绿钻", "name_en": "Music VIP", "price": 18, "icon": "🎵"},
