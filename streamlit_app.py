@@ -350,9 +350,8 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }}
 
-
-    /* 8. 右上角按钮样式 */
-    .neal-btn {{
+    /* 8. 右上角按钮样式 - 统一格式 */
+    .top-btn {{
         width: 100%;
         padding: 0.5rem 0;
         background-color: white;
@@ -363,14 +362,14 @@ st.markdown(f"""
         cursor: pointer;
         transition: all 0.15s ease;
         font-weight: 600;
+        text-align: center;
+        display: inline-block;
+        text-decoration: none;
     }}
-    .neal-btn:hover {{
+    .top-btn:hover {{
         background-color: #f9fafb;
         border-color: #d1d5db;
         transform: translateY(-1px);
-    }}
-    .neal-btn-link {{
-        text-decoration: none;
     }}
 
 </style>
@@ -380,15 +379,25 @@ st.markdown(f"""
 # 6. 主页面逻辑
 # ==========================================
 
-# 顶部工具栏
+# 顶部工具栏 - 统一语言切换和更多乐子按钮格式
 st.markdown('<div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">', unsafe_allow_html=True)
 col_lang, col_more = st.columns([1, 1.2], gap="small")
+
 with col_lang:
-    if st.button("🌐 " + ("EN" if st.session_state.lang == 'zh' else "中"), key="btn_lang", use_container_width=True):
+    # 语言切换按钮 - 使用统一的top-btn样式
+    lang_btn_text = "🌐 EN" if st.session_state.lang == 'zh' else "🌐 中"
+    if st.button(lang_btn_text, key="btn_lang", use_container_width=True):
         st.session_state.lang = 'en' if st.session_state.lang == 'zh' else 'zh'
         st.rerun()
+
 with col_more:
-    st.markdown(f"""<a href="https://laodeng.streamlit.app/" target="_blank" class="neal-btn-link"><button class="neal-btn">{get_txt('more_label')}</button></a>""", unsafe_allow_html=True)
+    # 更多乐子按钮 - 保持相同样式结构
+    st.markdown(f"""
+        <a href="https://laodeng.streamlit.app/" target="_blank" class="top-btn-link">
+            <button class="top-btn">{get_txt('more_label')}</button>
+        </a>
+    """, unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- 人物切换区域 (优化版) ---
@@ -536,7 +545,7 @@ if total_spent > 0:
         st.success(get_txt('balance_zero'))
 
 # ==========================================
-# 6. 底部咖啡 & 统计
+# 6. 底部咖啡 & 统计 (增加PayPal支付通道)
 # ==========================================
 st.markdown("<br><br>", unsafe_allow_html=True)
 c_btn_col1, c_btn_col2, c_btn_col3 = st.columns([1, 2, 1])
@@ -555,12 +564,30 @@ with c_btn_col2:
         with c1: cnt = st.number_input(get_txt('unit_cn'), 1, 100, step=1, key='coffee_num', label_visibility="collapsed")
         total = cnt * 10
         with c2: st.markdown(f"""<div style="background:#fff1f2; border:1px dashed #fecdd3; border-radius:8px; padding:8px; text-align:center;"><div style="color:#e11d48; font-weight:900; font-size:1.6rem; font-family:'JetBrains Mono';">¥{total}</div></div>""", unsafe_allow_html=True)
-        t1, t2 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay')])
-        def show_qr(img_path):
-            if os.path.exists(img_path): st.image(img_path, use_container_width=True)
-            else: st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}", width=140)
-        with t1: show_qr("wechat_pay.jpg")
-        with t2: show_qr("ali_pay.jpg")
+        
+        # 增加PayPal支付标签页
+        t1, t2, t3 = st.tabs([get_txt('pay_wechat'), get_txt('pay_alipay'), get_txt('pay_paypal')])
+        
+        def show_qr(img_path, payment_type="wechat"):
+            if os.path.exists(img_path): 
+                st.image(img_path, use_container_width=True)
+            else:
+                if payment_type == "paypal":
+                    # PayPal专属二维码（可以替换为实际的PayPal收款链接）
+                    paypal_link = f"https://paypal.me/yourpaypalid?amount={total/7}"  # 转换为美元示例
+                    st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={paypal_link}", width=140)
+                    st.markdown(f"""
+                        <div style="text-align:center; margin-top:10px; font-size:0.85rem; color:#666;">
+                            或直接转账至: yourpaypal@example.com (${total/7:.2f})
+                        </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.image(f"https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=Donate_{total}", width=140)
+        
+        with t1: show_qr("wechat_pay.jpg", "wechat")
+        with t2: show_qr("ali_pay.jpg", "alipay")
+        with t3: show_qr("paypal_pay.jpg", "paypal")  # PayPal二维码
+        
         st.write("")
         if st.button("🎉 " + get_txt('pay_success').split('!')[0], type="primary", use_container_width=True):
             st.balloons()
