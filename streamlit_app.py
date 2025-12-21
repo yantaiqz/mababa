@@ -274,24 +274,92 @@ st.markdown(f"""
         border: 1px solid rgba(229, 231, 235, 0.5);
     }}
     
-    /* Emoji 按钮 */
-    button[kind="tertiary"] {{ background: transparent !important; border: none !important; }}
-    button[kind="tertiary"] p {{ font-size: 3rem !important; margin:0; padding-top:5px; }}
-    
-    /* 文字 */
-    .item-name {{ font-weight: 700; color: #1f2937; text-align: center; font-size: 0.95rem; height: 40px; display:flex; align-items:center; justify-content:center; }}
-    .item-price {{ color: {theme_colors[1]}; font-weight: 600; text-align: center; font-family: 'JetBrains Mono'; margin-bottom: 10px; }}
-    .count-display {{ text-align: center; font-weight: 800; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; font-family: 'JetBrains Mono'; padding: 4px 0; }}
-
-    /* 账单 */
-    .bill-container {{ background: white; margin: 30px auto; max-width: 420px; box-shadow: 0 15px 40px rgba(0,0,0,0.12); border-radius: 6px; position: relative; }}
-    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
-    .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
-    .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
-    
+  
     .stats-bar {{ display: flex; justify-content: center; gap: 25px; margin: 40px auto; padding: 15px 25px; background: white; border-radius: 50px; border: 1px solid #eee; width: fit-content; }}
     .neal-btn {{ width: 100%; padding: 0.5rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-weight: 600; cursor: pointer; }}
     .neal-btn-link {{ text-decoration: none; color: #333; }}
+
+
+
+    
+    /* 4. Emoji 按钮 (完全透明 + 点击反馈) */
+    button[kind="tertiary"] {{
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        transition: transform 0.1s !important;
+    }}
+    button[kind="tertiary"]:hover {{ transform: scale(1.1) !important; }}
+    button[kind="tertiary"]:active {{ transform: scale(0.9) !important; }}
+    button[kind="tertiary"] p {{
+        font-size: 4rem !important; 
+        margin: 0 !important;
+        padding-top: 5px !important;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }}
+    
+    /* 5. 文本与数字优化 */
+    .item-name {{ 
+        font-size: 1rem; font-weight: 700; color: #1f2937; 
+        height: 36px; display: flex; align-items: center; justify-content: center; 
+        line-height: 1.2; text-align: center; margin-bottom: 4px;
+    }}
+    .item-price {{ 
+        color: {theme_colors[1]}; font-weight: 600; font-size: 0.9rem; 
+        text-align: center; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;
+    }}
+    
+    /* 6. 操作按钮美化 */
+    button[kind="secondary"], button[kind="primary"] {{ 
+        min-height: 36px; border-radius: 10px; font-weight: 700; border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }}
+    
+    /* 数量显示框 */
+    .count-display {{
+        text-align: center; line-height: 36px; 
+        font-weight: 800; color: #374151; font-size: 1.1rem;
+        background: #f9fafb; border-radius: 10px; 
+        border: 1px solid #e5e7eb; font-family: 'JetBrains Mono', monospace;
+    }}
+
+    /* 7. 账单拟物化 (Receipt) */
+    .bill-container {{ 
+        background: white; margin: 30px auto; max-width: 420px; 
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12); border-radius: 6px; overflow: hidden; 
+        position: relative;
+    }}
+    /* 锯齿边缘效果 (伪元素模拟) */
+    .bill-container::after {{
+        content: ""; position: absolute; bottom: -5px; left: 0; right: 0; height: 10px;
+        background: radial-gradient(circle, transparent 70%, white 75%) 0 0 / 10px 10px repeat-x;
+        transform: rotate(180deg);
+    }}
+    
+    .bill-footer {{ background: #fafafa; padding: 25px; text-align: center; border-top: 2px dashed #eee; }}
+    
+    /* 皮肤微调 */
+    .bill-wechat-header {{ background: #2AAD67; color: white; padding: 25px; text-align: center; font-weight: 600; }}
+    .bill-wechat-total {{ font-size: 1.8rem; font-weight: 800; text-align: center; margin: 15px 0; color: #111; font-family: 'JetBrains Mono'; }}
+    
+    .bill-alipay-header {{ background: #1677ff; color: white; padding: 20px; display: flex; justify-content: space-between; }}
+    .bill-alipay-total {{ padding: 20px; text-align: right; font-weight: 800; font-size: 1.8rem; border-top: 1px solid #f0f0f0; color: #1677ff; font-family: 'JetBrains Mono'; }}
+    
+    .bill-paypal-header {{ background: #003087; color: white; padding: 30px; }}
+    .bill-paypal-total {{ font-size: 1.8rem; color: #003087; text-align: center; margin: 20px 0; font-weight: 300; font-family: 'JetBrains Mono'; }}
+    
+    /* 统计条 */
+    .stats-bar {{
+        display: flex; justify-content: center; gap: 25px; margin-top: 40px; 
+        padding: 15px 25px; background-color: white; border-radius: 50px; 
+        border: 1px solid #eee; color: #6b7280; font-size: 0.85rem; 
+        width: fit-content; margin-left: auto; margin-right: auto; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }}
+
+
+
 </style>
 """, unsafe_allow_html=True)
 
